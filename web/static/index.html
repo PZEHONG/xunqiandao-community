@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#f5f7fb">
+  <title>签到记录 · 讯签到</title>
+  <link rel="icon" type="image/png" href="/assets/xunqiandao-logo.png?v=20261015-brand">
+  <link rel="apple-touch-icon" href="/assets/xunqiandao-logo.png?v=20261015-brand">
+  <link rel="stylesheet" href="/assets/app.css?v=20261016-sign-success">
+  <link rel="stylesheet" href="/assets/layout.css?v=20261016-compact-header">
+  <link rel="stylesheet" href="/assets/autosign.css?v=20261015-merged">
+  <link rel="stylesheet" href="/assets/auth.css?v=20261016-compact-header">
+  <script src="/assets/calendar.js?v=20261015-calendar" defer></script>
+  <script src="/assets/app.js?v=20261016-auto-renew" defer></script>
+  <script src="/assets/auth.js?v=20261016-auto-renew" defer></script>
+  <script src="/assets/locations.js?v=20261015-no-scale" defer></script>
+  <script src="/assets/sign.js?v=20261015-merged" defer></script>
+  <script src="/assets/reports.js?v=20261016-auto-renew" defer></script>
+  <script src="/assets/autosign.js?v=20261015-merged" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
+  <aside class="sidebar" aria-label="工作台侧栏">
+    <a class="brand" href="#records-panel" aria-label="讯签到，返回签到日历"><img class="brand-mark" src="/assets/xunqiandao-logo.png?v=20261015-brand" width="44" height="44" alt=""><span>讯签到<small>实习工作台</small></span></a>
+    <div class="nav-caption">实习管理</div>
+    <nav class="page-nav" aria-label="工作台导航">
+      <a href="#records-panel" class="nav-link active" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="17" rx="2"/><path d="M8 2v4M16 2v4M4 10h16M8 14h2M14 14h2M8 17h2"/></svg><span>签到记录</span></a>
+      <a href="#sign-panel" class="nav-link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><span>签到</span></a>
+      <a href="#week-panel" class="nav-link"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/></svg><span>实习周报</span></a>
+      <a href="#month-panel" class="nav-link"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5"/></svg><span>实习月报</span></a>
+      <a href="#account-panel" class="nav-link"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg><span>账号设置</span></a>
+    </nav>
+    <div class="sidebar-footer"><span class="local-dot" aria-hidden="true"></span>本地工作台</div>
+  </aside>
+  <header class="site-header"><div class="header-inner">
+    <div class="breadcrumb"><span>工作台</span><span aria-hidden="true">/</span><span id="current-page">签到记录</span></div>
+    <div class="header-tools"><span id="service-status" class="status-pill" role="status"><i aria-hidden="true"></i>连接服务中</span><a class="account-context" href="#account-panel" aria-label="查看账号设置"><span class="account-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/></svg></span><span class="account-copy"><span id="account-summary">尚未连接账号</span></span></a><button type="button" id="auth-open" class="button primary">登录</button><div id="auth-profile" class="auth-profile" hidden><button type="button" id="auth-logout" class="text-button" aria-label="退出登录" title="退出登录"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H5a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4M14 8l4 4-4 4M9 12h11"/></svg></button></div></div>
+  </div></header>
+  <main id="main-content" class="workspace" tabindex="-1" aria-labelledby="page-title">
+    <h1 id="page-title" class="sr-only">签到记录</h1>
+    <section class="panel records-panel" id="records-panel" aria-labelledby="records-title">
+      <div class="panel-heading">
+        <div><h2 id="records-title" tabindex="-1">签到日历</h2><p id="records-footnote">连接账号后查看签到日历与明细。</p></div>
+        <button type="button" id="query-button" class="button secondary"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 18 17"/></svg>刷新记录</button>
+      </div>
+      <div id="query-message" class="inline-message" role="status" hidden></div>
+      <div id="sign-calendar" class="sign-calendar" aria-labelledby="calendar-month" aria-busy="false">
+        <div class="calendar-toolbar">
+          <div class="calendar-month-controls">
+            <button type="button" id="calendar-prev" class="calendar-arrow" aria-label="上个月" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 5-7 7 7 7"/></svg></button>
+            <h3 id="calendar-month" aria-live="polite"></h3>
+            <button type="button" id="calendar-next" class="calendar-arrow" aria-label="下个月" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 5 7 7-7 7"/></svg></button>
+            <button type="button" id="calendar-current" class="text-button" hidden>本月</button>
+          </div>
+          <p class="calendar-streak"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="17" rx="2"/><path d="M8 2v4M16 2v4M4 10h16m4 5 3 3 5-5"/></svg><span>已连续签到 <strong id="calendar-streak">—</strong> 天</span></p>
+        </div>
+        <div class="calendar-weekdays" aria-hidden="true"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+        <div id="calendar-days" class="calendar-days" role="list" aria-label="本月每日签到情况"></div>
+        <div class="calendar-footer"><div class="calendar-legend"><span><i class="legend-signed" aria-hidden="true"></i>已签到</span><span><i class="legend-today" aria-hidden="true"></i>今天</span><span id="calendar-abnormal-legend" hidden><i class="legend-abnormal" aria-hidden="true"></i>异常记录</span><span id="calendar-unknown-legend" hidden><i class="legend-unknown" aria-hidden="true"></i>状态待确认</span></div><p id="calendar-caption" role="status">连接账号后查看签到情况。 <a id="calendar-connect" href="#account-panel">连接账号</a></p></div>
+      </div>
+      <button type="button" id="records-history" class="records-history" aria-haspopup="dialog" aria-controls="records-dialog"><span>签到记录 <span id="records-count" class="count-badge" hidden></span></span><span class="history-action" aria-hidden="true">展开明细<svg viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></svg></span></button>
+    </section>
+    <section class="panel sign-panel" id="sign-panel" aria-labelledby="sign-title" hidden>
+      <div class="panel-heading"><div><h2 id="sign-title" tabindex="-1">签到</h2><p id="sign-purpose">确认地点和信息后提交。</p></div><button type="submit" form="sign-form" id="sign-button" class="button primary" disabled>提交签到</button></div>
+      <div class="sign-mode-switch" role="group" aria-label="签到方式"><button type="button" id="sign-mode-now" aria-pressed="true">立即签到</button><button type="button" id="sign-mode-daily" aria-pressed="false">每日自动</button></div>
+      <div id="auto-message" class="inline-message" role="status" hidden></div>
+      <form id="sign-form">
+        <div class="sign-date-row"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l-3 2"/></svg><time id="sign-date"></time><span class="location-status" id="location-status" role="status">待选择地点</span></div>
+        <div id="auto-editor" class="daily-settings" hidden>
+          <div class="auto-fields"><div class="field"><label for="auto-name">任务名称</label><input id="auto-name" maxlength="60" placeholder="例如：上班签到" value="每日签到" required disabled></div><div class="field"><label for="auto-time">每日时间（北京时间）</label><input id="auto-time" type="time" step="60" required value="09:00" disabled></div></div>
+          <p id="auto-edit-note" class="field-hint" hidden>正在编辑，原任务已暂停。</p><button type="button" id="auto-cancel" class="text-button" hidden>取消编辑，保持暂停</button>
+          <p class="field-hint">每天含周末 · 关闭网页仍执行 · 电脑及后台须保持运行。自动任务不附带照片。</p>
+        </div>
+        <div class="sign-layout">
+          <section class="location-picker" aria-labelledby="location-picker-title">
+            <div id="auto-saved-place" class="auto-place" hidden><div><strong id="auto-saved-name"></strong><p id="auto-saved-address"></p><small>此任务已确认的地点，仅用于每日自动</small></div><button type="button" id="auto-change-place" class="button secondary">更换地点</button></div>
+            <h3 id="location-picker-title" class="sr-only">签到地点</h3>
+            <details id="location-search-panel" class="location-search-panel" open><summary>查找地点</summary>
+            <div class="location-search-row">
+              <div class="field location-city-field"><label for="location-city">城市 <span class="optional">（选填）</span></label><input id="location-city" placeholder="全国" maxlength="40" autocomplete="off"></div>
+              <div class="field location-keyword-field"><label for="location-search">地点名称或地址</label><div class="input-action"><input id="location-search" placeholder="搜索单位、建筑或街道" maxlength="80" autocomplete="off" aria-describedby="location-search-message"><button type="button" id="location-search-button" class="button secondary" aria-label="搜索地址"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg><span>搜索</span></button></div></div>
+            </div>
+            <p id="location-search-message" class="field-hint location-feedback" role="status">搜索并选择实际签到地点。</p>
+            <div id="location-results" class="location-results" role="group" aria-label="地址搜索结果" hidden></div>
+            </details>
+            <div class="map-frame" id="map-frame" aria-busy="false">
+              <div id="location-map" class="location-map" role="region" aria-label="高德地点预览地图"></div>
+              <div id="map-zoom-controls" class="map-zoom-controls" role="group" aria-label="地图缩放" hidden>
+                <button type="button" id="map-zoom-in" aria-label="放大地图" title="放大地图" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg></button>
+                <button type="button" id="map-zoom-out" aria-label="缩小地图" title="缩小地图" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+              </div>
+              <div id="map-empty" class="map-empty">
+                <span class="map-empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3zM9 3v15M15 6v15"/><circle cx="15" cy="10" r="2"/></svg></span>
+                <h3 id="map-empty-title">正在连接高德地图</h3><p id="map-empty-description">稍候即可查看地点与周边环境。</p>
+              </div>
+            </div>
+            <details class="sign-map-tools"><summary>地图选项</summary><div class="map-toolbar">
+              <div class="map-layers" role="group" aria-label="地图图层"><button type="button" id="map-standard" aria-pressed="true" disabled>标准图</button><button type="button" id="map-satellite" aria-pressed="false" disabled>卫星图</button></div>
+              <button type="button" id="map-recenter" class="map-tool" disabled aria-label="将地图移回所选地点"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg><span>回到标记</span></button>
+            </div>
+            <div class="map-connection"><span id="map-state" role="status">连接中</span><button type="button" id="map-retry" class="text-button">重新连接</button></div></details>
+            <div id="location-preview" class="location-preview" aria-live="polite" hidden>
+              <div><span class="preview-eyebrow">候选地点</span><strong id="location-preview-name"></strong><p id="location-preview-address"></p></div>
+              <div class="location-preview-actions"><button type="button" id="location-cancel" class="button secondary">取消</button><button type="button" id="location-use" class="button primary" disabled>使用此地点</button></div>
+            </div>
+            <div class="location-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg><div><strong id="location-note-title">请选择地点</strong><p id="location-note-text">搜索并确认实际签到地点。</p></div><button type="button" id="location-adjust" class="text-button" aria-controls="location-search-panel" aria-expanded="true">地点调整</button></div>
+          </section>
+          <section class="sign-information" aria-labelledby="sign-information-title">
+            <h3 id="sign-information-title" class="section-title">签到信息</h3>
+            <div class="sign-remark-row"><span id="sign-remark-heading">签到备注</span><input id="sign-remark" type="hidden"><button type="button" id="sign-remark-open" aria-haspopup="dialog" aria-labelledby="sign-remark-heading sign-remark-label"><span id="sign-remark-label">选择备注</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg></button></div>
+            <div class="sign-description"><label for="sign-comment">签到说明 <span class="optional">（选填）</span></label><textarea id="sign-comment" placeholder="填写说明（选填）" maxlength="1000" rows="4"></textarea><span id="sign-comment-count" class="sign-comment-count">0 / 1000</span></div>
+            <div class="sign-photo-section"><div id="sign-photo-list" class="sign-photo-list"><button type="button" id="sign-photo-add" class="sign-photo-add" aria-label="添加签到照片"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h4l2-3h4l2 3h4v14H4Z"/><circle cx="12" cy="13" r="4"/></svg><span>添加照片</span></button></div><input id="sign-photos" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple hidden><p class="field-hint">最多 3 张，每张 10 MB · 确认提交后上传</p><p id="sign-photo-status" class="field-hint" role="status" hidden></p></div>
+            <details class="coordinate-details"><summary>地点详情 <span id="coordinate-source">本次确认的地点</span></summary><div class="field"><label for="sign-address">完整地址</label><input id="sign-address" autocomplete="off" readonly></div><div class="field"><label for="sign-name">地点名称</label><input id="sign-name" autocomplete="off" readonly></div><div class="sign-fields"><div class="field"><label for="latitude">纬度</label><input id="latitude" type="number" min="-90" max="90" step="any" autocomplete="off" readonly></div><div class="field"><label for="longitude">经度</label><input id="longitude" type="number" min="-180" max="180" step="any" autocomplete="off" readonly></div></div><p class="field-hint">地图供位置参考，不读取设备定位。</p></details>
+          </section>
+        </div>
+        <div id="sign-message" class="inline-message" role="status" hidden></div>
+        <div class="sign-actions"><span id="sign-save-hint" class="sign-save-hint">地点仅用于本次签到</span></div>
+      </form>
+      <details id="auto-panel" class="auto-management"><summary>每日任务 <span id="auto-task-count">查看计划与执行记录</span></summary>
+        <div class="auto-management-body">
+            <div class="auto-subheading"><h3>计划管理</h3><div><button type="button" id="auto-new" class="text-button">新建任务</button><button type="button" id="auto-refresh" class="text-button">刷新</button></div></div>
+          <p id="auto-empty" class="auto-empty">连接账号后查看每日任务。</p><div id="auto-tasks" class="auto-tasks"></div>
+          <details class="auto-history"><summary>最近执行</summary><p id="auto-runs-empty" class="auto-empty">尚无自动执行记录。</p><div id="auto-runs" class="auto-runs"></div></details>
+          <details class="auto-help"><summary>运行说明</summary><p>电脑须开机、联网，后台服务须保持运行；按北京时间每天执行，不补签错过时段。切换账号或清除浏览器配置不会停止已启用任务。已经发出的签到无法撤回，手机或手动签到不会自动抵消每日任务。</p></details>
+        </div>
+      </details>
+    </section>
+    <section class="panel form-panel" id="account-panel" aria-labelledby="account-title" hidden>
+      <div id="system-account" class="system-account"><div><strong>讯签到账号</strong><p id="system-account-email">登录后自动关联你的习讯云学号。</p></div><button type="button" id="system-auth-open" class="button secondary">登录</button></div>
+      <div class="panel-heading"><div><h2 id="account-title" tabindex="-1">习讯云账号</h2><p id="account-connection-description">登录后自动连接，需要更新凭证时可在此重新连接。</p></div></div>
+      <div class="account-layout"><form id="login-form">
+        <div class="field"><label for="school-search">学校名称 <span class="required">（必填）</span></label><div class="input-action"><input id="school-search" placeholder="输入学校名称" required autocomplete="off" aria-describedby="school-search-message"><button type="button" id="search-school" class="button secondary">搜索</button></div><p id="school-search-message" class="field-hint" aria-live="polite">输入学校名称，连接时自动匹配；也可搜索后选择学校。</p><div id="school-results" class="school-results" hidden></div></div>
+        <div class="field"><label for="account">习讯云学号 <span class="required">（必填）</span></label><input id="account" placeholder="登录后自动关联学号" autocomplete="username" readonly aria-describedby="account-student-hint" required><p id="account-student-hint" class="field-hint">与登录学号自动关联，无需重复填写。</p></div>
+        <div class="field"><label for="password">登录密码 <span class="required">（必填）</span></label><div class="password-input"><input id="password" type="password" placeholder="输入习讯云密码" autocomplete="current-password" required><button id="toggle-password" type="button" aria-label="显示密码" aria-pressed="false">显示</button></div></div>
+        <div id="login-message" class="inline-message" role="status" hidden></div>
+        <button type="submit" id="login-button" class="button primary full-width">连接并查看记录<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></button>
+        <p class="form-note">浏览器仅保存账号和学校，不保存密码或地点。</p>
+      </form>
+      <aside class="account-help"><h3>连接前，请确认</h3><ol><li><strong>选择所在学校</strong><p>输入学校全称，选择匹配的搜索结果。</p></li><li><strong>使用习讯云学号</strong><p>学号与登录账号一致，填写对应的习讯云密码。</p></li><li><strong>开始管理实习</strong><p>连接成功后，可查看签到记录、填写周报和月报。</p></li></ol><p class="privacy-note">登录凭证在本机加密保存，用于自动续连，不写入浏览器。</p></aside></div>
+      <div class="settings-footer"><button type="button" id="clear-config" class="text-button">清除浏览器配置</button></div>
+    </section>
+    <section class="panel report-panel" id="week-panel" aria-labelledby="week-title" hidden><div class="panel-heading"><div><h2 id="week-title" tabindex="-1">周报列表</h2><p>记录每周实习工作，查看老师批阅。</p></div></div><div class="report-workspace"></div></section>
+    <section class="panel report-panel" id="month-panel" aria-labelledby="month-title" hidden><div class="panel-heading"><div><h2 id="month-title" tabindex="-1">月报列表</h2><p>总结每月实习进展，查看老师批阅。</p></div></div><div class="report-workspace"></div></section>
+  </main>
+  <dialog id="records-dialog" class="records-dialog" aria-labelledby="records-dialog-title" aria-describedby="records-dialog-month">
+    <div class="records-dialog-heading"><div><h2 id="records-dialog-title">签到记录</h2><p id="records-dialog-month"></p></div><form method="dialog"><button class="button secondary" aria-label="关闭签到记录" autofocus>关闭</button></form></div>
+    <div class="records-dialog-body">
+      <div id="records-content" hidden>
+        <div id="query-data" class="data-summary"></div>
+        <div class="table-wrap" id="record-table-wrap" hidden><table><caption class="sr-only">当前账号所选月份的官方签到记录，时间为北京时间</caption><thead><tr><th scope="col">日期 / 时间</th><th scope="col">签到状态</th><th scope="col">签到地点</th></tr></thead><tbody id="record-table-body"></tbody></table></div>
+      </div>
+      <div class="empty-state" id="records-empty">
+        <div class="empty-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 3h6v4H9zM9 12h6M9 16h4"/></svg></div>
+        <h3 id="empty-title">连接账号，查看签到记录</h3>
+        <p id="empty-description">首次使用，请先设置学校和习讯云学号。</p>
+        <a href="#account-panel" id="empty-account-link" class="button primary">连接账号<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg></a>
+      </div>
+      <details id="record-details" class="raw-details" hidden><summary>查看平台原始数据</summary><pre id="query-raw"></pre></details>
+    </div>
+  </dialog>
+  <dialog id="sign-confirm" aria-labelledby="confirm-title" aria-describedby="sign-confirm-text"><form method="dialog"><h2 id="confirm-title">确认提交签到</h2><p id="sign-confirm-text"></p><p class="muted">请确认账号及实际地点正确。</p><div class="dialog-actions"><button value="cancel" class="button secondary" autofocus>返回检查</button><button value="confirm" class="button primary">确认提交</button></div></form></dialog>
+  <dialog id="sign-success" class="sign-success" aria-labelledby="sign-success-title" aria-describedby="sign-success-message"><form method="dialog"><div class="sign-success-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg></div><h2 id="sign-success-title">签到成功</h2><p id="sign-success-message"></p><button class="button primary" value="close" autofocus>我知道了</button></form></dialog>
+  <dialog id="auth-dialog" class="auth-dialog" data-agreement-version="2026-10-16-auto-renew" aria-labelledby="auth-title" aria-describedby="auth-description">
+    <button type="button" id="auth-close" class="auth-close" aria-label="关闭登录窗口"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+    <div class="auth-brand"><img src="/assets/xunqiandao-logo.png" width="42" height="42" alt=""><div><h2 id="auth-title">登录讯签到</h2><p id="auth-description">登录后，管理你的实习与签到。</p></div></div>
+    <div class="auth-tabs" role="tablist" aria-label="账号操作"><button type="button" id="auth-tab-login" role="tab" aria-selected="true" aria-controls="auth-pane-login">学号登录</button><button type="button" id="auth-tab-official" role="tab" aria-selected="false" aria-controls="auth-pane-official" tabindex="-1">首次使用</button></div>
+    <form id="auth-pane-login" role="tabpanel" aria-labelledby="auth-tab-login">
+      <div class="field"><label for="auth-identity">学号</label><input id="auth-identity" name="username" autocomplete="username" minlength="3" maxlength="24" pattern="[a-zA-Z0-9_]{3,24}" placeholder="输入习讯云学号" required></div>
+      <div class="field"><label for="auth-password">密码</label><div class="auth-password-wrap"><input id="auth-password" name="password" type="password" autocomplete="current-password" required><button type="button" data-auth-password="auth-password" aria-label="显示密码" aria-pressed="false">显示</button></div></div>
+      <div class="auth-form-tools"><span>长期保持登录，使用时自动续期</span><button type="button" id="auth-forgot" class="text-button">忘记密码？</button></div>
+      <div id="auth-login-consent-row" class="auth-consent-row"><label class="auth-consent" for="auth-login-consent"><input id="auth-login-consent" name="accept_terms" type="checkbox" required><span>我已阅读并同意<a href="/terms" target="_blank" rel="noopener">《用户协议》</a>和<a href="/privacy" target="_blank" rel="noopener">《隐私政策》</a></span></label></div>
+      <button type="submit" id="auth-login-submit" class="button primary full-width">登录</button>
+    </form>
+    <form id="auth-pane-official" role="tabpanel" aria-labelledby="auth-tab-official" hidden>
+      <p class="auth-direct-intro">使用学校发放的习讯云账号，验证成功后自动创建账号并连接。</p>
+      <div class="field"><label for="auth-official-school">学校名称</label><input id="auth-official-school" name="school" autocomplete="off" maxlength="80" aria-describedby="auth-official-school-hint" aria-controls="auth-official-schools" placeholder="输入学校名称，自动匹配" required><p id="auth-official-school-hint" class="field-hint" role="status">输入至少 2 个字，自动显示匹配的学校。</p><div id="auth-official-schools" class="auth-school-results" role="group" aria-label="匹配的学校" hidden></div></div>
+      <div class="field"><label for="auth-official-account">习讯云学号</label><input id="auth-official-account" name="username" autocomplete="username" minlength="3" maxlength="24" pattern="[a-zA-Z0-9_]{3,24}" placeholder="输入学校发放的学号" required></div>
+      <div class="field"><label for="auth-official-password">习讯云密码</label><div class="auth-password-wrap"><input id="auth-official-password" name="password" type="password" autocomplete="current-password" maxlength="256" required><button type="button" data-auth-password="auth-official-password" aria-label="显示密码" aria-pressed="false">显示</button></div></div>
+      <p class="auth-direct-help">忘记密码？请在习讯云官方 App 中找回。</p>
+      <div id="auth-official-consent-row" class="auth-consent-row"><label class="auth-consent" for="auth-official-consent"><input id="auth-official-consent" name="accept_terms" type="checkbox" required><span>我已阅读并同意<a href="/terms" target="_blank" rel="noopener">《用户协议》</a>和<a href="/privacy" target="_blank" rel="noopener">《隐私政策》</a></span></label></div>
+      <button type="submit" id="auth-official-submit" class="button primary full-width">使用习讯云登录</button>
+    </form>
+    <p id="auth-message" class="auth-message" role="status" aria-live="polite" hidden></p>
+    <p class="auth-switch"><span id="auth-switch-text">首次使用？</span><button type="button" id="auth-switch" class="text-button">使用习讯云登录</button></p>
+    <p id="auth-footer" class="auth-footer">首次通过习讯云验证后，系统将自动为您创建账号并完成登录。完成登录即表示您已阅读并同意《用户协议》和《隐私政策》。</p>
+  </dialog>
+  <dialog id="sign-remark-dialog" class="sign-remark-dialog" aria-labelledby="sign-remark-title"><div class="sign-remark-dialog-heading"><h2 id="sign-remark-title">签到备注</h2><form method="dialog"><button class="text-button" aria-label="关闭签到备注选择">关闭</button></form></div><p id="sign-remark-message" class="field-hint" role="status"></p><div id="sign-remark-options" class="sign-remark-options" role="group" aria-label="选择签到备注"></div><button type="button" id="sign-remark-reload" class="text-button">刷新备注</button></dialog>
+  <div id="toast" class="toast" role="status" hidden></div>
+  <template id="report-layout">
+    <div class="report-list-view">
+      <form class="report-filters">
+        <div class="field"><label data-label="filter-start">提交日期从</label><input data-role="filter-start" type="date"></div>
+        <div class="field"><label data-label="filter-end">至</label><input data-role="filter-end" type="date"></div>
+        <div class="field"><label data-label="filter-status">批阅状态</label><select data-role="filter-status"><option value="">全部</option><option value="without_approval">未批阅</option><option value="approval">已批阅</option></select></div>
+        <button type="submit" class="button secondary" data-role="search">查询</button>
+        <button type="button" class="button primary" data-role="new">新建报告</button>
+      </form>
+      <div class="inline-message" data-role="list-message" role="status" hidden></div>
+      <p class="report-empty" data-role="empty" role="status">连接账号后，可查询和填写报告。</p>
+      <div data-role="table-wrap" hidden><table class="report-table"><caption class="sr-only">实习报告列表</caption><thead><tr><th>提交时间</th><th>批阅时间</th><th>批阅结果</th><th>批阅老师</th><th>已打回</th><th>操作</th></tr></thead><tbody data-role="rows"></tbody></table></div>
+      <div class="report-pagination" data-role="pagination" hidden><span data-role="count" aria-live="polite"></span><div><button type="button" class="button secondary" data-role="previous">上一页</button><span data-role="page"></span><button type="button" class="button secondary" data-role="next">下一页</button></div></div>
+    </div>
+    <div class="report-editor" data-role="editor" hidden>
+      <div class="report-editor-heading"><h2 data-role="editor-title">新建报告</h2><button type="button" class="button secondary" data-role="back">返回列表</button></div>
+      <div class="inline-message" data-role="editor-message" role="status" hidden></div>
+      <form data-role="form">
+        <div class="report-dates"><div class="field"><label data-label="start">开始日期 <span class="required">（必填）</span></label><input data-role="start" type="date" required></div><div class="field"><label data-label="end">结束日期 <span class="required">（必填）</span></label><input data-role="end" type="date" required></div></div>
+        <div data-role="fields"></div>
+        <details data-role="old-content" class="report-old-content" hidden><summary>学校模板已更新，查看旧草稿内容</summary><p class="field-hint">以下正文已保留，可复制到新的对应栏目。</p><div data-role="old-fields"></div></details>
+        <div class="field"><label data-label="files">附件 <span class="optional">（选填）</span></label><input data-role="files" type="file" multiple><p class="field-hint">最多 3 个附件，每个不超过 10 MB。确认提交后上传。</p><ul class="report-files" data-role="file-list"></ul></div>
+        <div class="report-editor-actions"><button type="button" class="button secondary" data-role="save">保存草稿</button><button type="submit" class="button primary" data-role="submit">提交报告</button></div>
+        <p class="field-hint" data-role="draft-status" aria-live="polite">草稿保存在此浏览器，按账号与报告类型分开。</p>
+      </form>
+    </div>
+  </template>
+  <dialog id="report-confirm" aria-labelledby="report-confirm-title"><form method="dialog"><h2 id="report-confirm-title">确认提交报告</h2><p id="report-confirm-text"></p><p class="muted">请确认内容和日期正确，提交后将发送至习讯云。</p><div class="dialog-actions"><button value="cancel" class="button secondary" autofocus>返回检查</button><button value="confirm" class="button primary">确认提交</button></div></form></dialog>
+  <dialog id="report-detail" class="report-detail" aria-labelledby="report-detail-title"><form method="dialog" class="report-editor-heading"><h2 id="report-detail-title">报告详情</h2><button class="button secondary">关闭</button></form><div id="report-detail-message" class="inline-message" role="status" hidden></div><div id="report-detail-body"></div><button type="button" class="button secondary" id="report-download" hidden>下载报告文本</button></dialog>
+  <dialog id="auto-confirm" aria-labelledby="auto-confirm-title"><form method="dialog"><h2 id="auto-confirm-title">确认启用每日任务</h2><p id="auto-confirm-text" class="auto-confirm-text"></p><p id="auto-confirm-note" class="muted">启用后保存以上信息，每天自动提交。创建任务不会立即签到。</p><div class="dialog-actions"><button value="cancel" class="button secondary" autofocus>返回检查</button><button id="auto-confirm-yes" value="confirm" class="button primary">确认启用</button></div></form></dialog>
+</body>
+</html>

@@ -1,0 +1,28 @@
+.workspace { --sidebar: 216px; min-height: 100dvh; color: #1D293D; }
+.workspace[data-collapsed="true"] { --sidebar: 76px; }
+.brand { display:flex; align-items:center; gap:10px; min-height:44px; text-decoration:none; color:inherit; font-size:19px; font-weight:750; flex-shrink:0; }
+.brand img { display:block; flex-shrink:0; width:40px; height:40px; object-fit:contain; }
+.account-actions { margin-left:auto; min-width:0; display:flex; align-items:center; gap:8px; }
+.desktop-sidebar { position:fixed; width:var(--sidebar); top:64px; bottom:0; left:0; padding:20px 12px; background:#fff; border-right:1px solid #E3E8F0; }
+.desktop-sidebar nav { display:grid; gap:8px; }
+.desktop-sidebar a { display:flex; gap:12px; align-items:center; min-height:48px; padding:12px; text-decoration:none; color:#5E6B80; border-radius:10px; white-space:nowrap; font-size:14px; }
+.desktop-sidebar a:hover { background:#F5F7FB; }
+.desktop-sidebar a[aria-current="page"] { background:#EDF3FF; color:#2456D6; font-weight:650; }
+.workspace[data-collapsed="true"] .desktop-sidebar a span { display:none; }
+.workspace main { margin-left:var(--sidebar); padding:88px 28px 28px; min-width:0; overflow-wrap:anywhere; }
+.workspace main:focus { outline:none; }
+.mobile-nav { display:none; }
+.sr-only { position:absolute; width:1px; height:1px; margin:-1px; padding:0; clip-path:inset(50%); overflow:hidden; white-space:nowrap; }
+.skip-link { position:fixed; top:-80px; left:16px; z-index:2000; padding:12px; background:#fff; }
+.skip-link:focus { top:8px; }
+@media(min-width:761px) and (max-width:1100px) { .workspace { --sidebar:184px; } .workspace main { padding:84px 20px 24px; } }
+@media(max-width:760px) {
+  .desktop-sidebar,.sidebar-toggle.MuiIconButton-root { display:none; }
+  .workspace main { margin-left:0; padding:80px 12px calc(92px + env(safe-area-inset-bottom,0px)); }
+  .mobile-nav { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); position:fixed; z-index:1100; left:0; right:0; bottom:0; background:#fff; border-top:1px solid #E3E8F0; padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px)); }
+  .mobile-nav a { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; min-width:0; min-height:52px; text-decoration:none; border-radius:8px; color:#5E6B80; font-size:12px; }
+  .mobile-nav a[aria-current="page"] { color:#2456D6; background:#EDF3FF; font-weight:650; }
+  .brand { font-size:17px; gap:7px; } .brand img { width:34px; height:34px; }
+  .current-page.MuiTypography-root { display:none; }
+  input,textarea,button { scroll-margin-bottom:100px; }
+}

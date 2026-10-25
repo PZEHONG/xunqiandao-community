@@ -1,0 +1,18 @@
+.connection-account.MuiButton-root { padding:5px 9px 5px 11px; min-height:44px; min-width:0; border-radius:10px; color:#344054; text-transform:none; gap:8px; line-height:1.35; flex-shrink:0; }
+.connection-account.MuiButton-root:hover { background:#F4F6F9; }
+.connection-account-copy { display:flex; flex-direction:column; align-items:flex-start; gap:3px; min-width:0; }
+.connection-account-number { font-size:13px; font-weight:600; max-width:160px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.connection-status { display:flex; align-items:center; gap:5px; font-size:11px; font-weight:400; color:#667085; white-space:nowrap; }
+.connection-dot { height:6px; width:6px; flex-shrink:0; border-radius:50%; background:#98A2B3; }
+.connection-status[data-tone="connected"] { color:#247A58; }
+.connection-status[data-tone="connected"] .connection-dot { background:#22A06B; box-shadow:0 0 0 2px #22A06B12; }
+.connection-status[data-tone="expired"] { color:#A86416; }
+.connection-status[data-tone="expired"] .connection-dot { background:#DC9131; }
+.connection-chevron.MuiSvgIcon-root { font-size:16px; color:#98A2B3; }
+.connection-label-mobile { display:none; }
+@media(max-width:760px) {
+ .connection-account.MuiButton-root { padding:7px 8px; gap:4px; }
+ .connection-account-number,.connection-label,.connection-chevron.MuiSvgIcon-root { display:none; }
+ .connection-label-mobile { display:inline; }
+ .connection-status { font-size:12px; }
+}

@@ -1,0 +1,22 @@
+import { Feedback } from '../../components/Feedback';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Stack, TextField, Typography } from '@mui/material';
+import { MainCard } from '../../components/MainCard';
+import { AttachmentPicker } from './AttachmentPicker';
+import { downloadText, reportLabel } from './reportKinds';
+import type { ReportKind } from './types';
+import type { ReportsModel } from './useReports';
+export function ReportEditor({ model: m, kind }: { model: ReportsModel; kind: ReportKind }) {
+  const c = m.confirmation;
+  return <MainCard title={`新建${reportLabel(kind)}`}><Stack gap={2.5}>
+    <Typography variant="body2" color="text.secondary">{m.account} · {m.school}</Typography>
+    {m.submissionUncertain && <Feedback severity="warning" action={<Button disabled={m.busy} onClick={m.closeEditor}>返回列表核对</Button>}>上次提交结果待核对，请先查询报告列表，确认没有重复记录后再重新提交。</Feedback>}
+    {m.error && <Feedback severity="error">{m.error}</Feedback>}
+    <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}><TextField type="date" label="开始日期" value={m.start} disabled={m.busy} onChange={e => m.setStart(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} /><TextField type="date" label="结束日期" value={m.end} disabled={m.busy} onChange={e => m.setEnd(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} /></Stack>
+    {m.fields.map((field, index) => <TextField key={`${index}:${field.sort}:${field.title}`} label={field.title} required={field.require === '1'} multiline minRows={5} value={field.content} disabled={m.busy} onChange={e => m.setField(index, e.target.value)} slotProps={{ htmlInput: { maxLength: 50000 } }} helperText={`${field.content.length} / 50000`} />)}
+    {!!m.orphaned.length && <Feedback severity="warning"><Stack gap={1}><Typography fontWeight={600}>模板变化，以下旧内容未自动填入，请复制到合适字段后再提交。</Typography>{m.orphaned.map((f, i) => <Box key={i}><Typography variant="body2">{f.title}</Typography><Typography sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{f.content}</Typography></Box>)}<Button sx={{ alignSelf: 'flex-start' }} onClick={() => downloadText(`${reportLabel(kind)}-未匹配正文.txt`, m.orphaned.map(f => `${f.title}\n${f.content}`).join('\n\n'))}>下载保留正文</Button></Stack></Feedback>}
+    <AttachmentPicker model={m} /><Divider />
+    <Typography role="status" variant="body2" color={m.storage.includes('未保存') || m.recoveryRaw ? 'error.main' : 'text.secondary'}>{m.storage}</Typography>
+    {m.recoveryRaw && <Button sx={{ alignSelf: 'flex-start' }} onClick={() => downloadText('原始报告草稿.txt', m.recoveryRaw)}>下载损坏草稿原文</Button>}
+    <Stack direction="row" gap={1} flexWrap="wrap"><Button disabled={m.busy} onClick={m.closeEditor}>返回列表</Button><Button disabled={m.busy} onClick={() => { m.save(); }}>保存草稿</Button><Button disabled={m.busy} onClick={() => downloadText(`${reportLabel(kind)}-草稿.txt`, [m.start + ' 至 ' + m.end, ...m.fields.map(f => `${f.title}\n${f.content}`), ...m.orphaned.map(f => `保留正文：${f.title}\n${f.content}`)].join('\n\n'))}>下载草稿文本</Button><Button variant="contained" disabled={m.busy} onClick={m.prepareConfirmation}>核对并提交</Button></Stack>
+  </Stack><Dialog open={!!c} onClose={() => { if (!m.busy) m.cancelConfirmation(); }} aria-labelledby="report-confirm-title" scroll="paper"><DialogTitle id="report-confirm-title">确认提交报告</DialogTitle><DialogContent dividers>{c && <Stack gap={2} sx={{ overflowWrap: 'anywhere' }}><Typography>{reportLabel(c.input.business_type)} · {c.input.account} · {m.school}</Typography><Typography>{c.input.start_date} 至 {c.input.end_date}</Typography>{c.input.content.map((f, i) => <Box key={i}><Typography variant="body2" color="text.secondary">{f.title}</Typography><Typography sx={{ whiteSpace: 'pre-wrap' }}>{f.content || '未填写'}</Typography></Box>)}<Typography sx={{ whiteSpace: 'pre-wrap' }}>附件：{c.attachments.length ? c.attachments.map(a => a.name).join('\n') : '无'}</Typography><Typography variant="body2" color="text.secondary">确认后上传所选附件并提交本报告，请核对正文、日期和报告类型。</Typography>{m.busy && <Typography role="status">正在上传附件并提交，请稍候…</Typography>}</Stack>}</DialogContent><DialogActions sx={{ gap: 1, px: 3, py: 2 }}><Button disabled={m.busy} onClick={m.cancelConfirmation}>取消</Button><Button variant="contained" disabled={m.busy || !c} onClick={() => void m.submitConfirmed(c)}>{m.busy ? '提交中…' : '确认提交'}</Button></DialogActions></Dialog></MainCard>;
+}

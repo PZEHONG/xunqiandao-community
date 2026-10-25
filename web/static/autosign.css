@@ -1,0 +1,54 @@
+.sign-mode-switch { display:flex; gap:4px; padding:4px; background:var(--bg); border:1px solid var(--line); border-radius:8px; width:fit-content; margin:20px 24px 4px; }
+.sign-mode-switch button { min-height:44px; padding:8px 24px; background:transparent; color:var(--muted); border:0; border-radius:5px; }
+.sign-mode-switch button[aria-pressed="true"] { background:var(--surface); color:var(--primary); font-weight:600; box-shadow:0 1px 4px #1d293d14; }
+.daily-settings { padding:16px 0; border-bottom:1px solid var(--line); }
+.daily-settings .field { margin-bottom:12px; }
+.daily-settings #auto-cancel { padding-left:0; }
+.sign-panel[data-saved-place="true"] .location-picker > :not(#auto-saved-place), .sign-panel[data-saved-place="true"] .coordinate-details { display:none; }
+.auto-management { margin:20px 24px 0; border-top:1px solid var(--line); }
+.auto-management > summary { display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:60px; padding:12px 0; font-weight:600; cursor:pointer; }
+.auto-management > summary span { font-size:12px; font-weight:400; color:var(--muted); }
+.auto-management > summary::after { content:'展开'; color:var(--primary); font-size:12px; font-weight:400; }
+.auto-management[open] > summary::after { content:'收起'; }
+.auto-management-body { padding:0 0 16px; }
+.auto-management-body > .auto-subheading { margin-top:0; }
+.auto-history, .auto-help { padding:12px 0; border-top:1px solid var(--line); margin-top:16px; }
+.auto-history > summary,.auto-help > summary { min-height:44px; align-content:center; color:var(--muted); cursor:pointer; }
+.sign-panel > #auto-message { margin:16px 24px 0; }
+.sign-panel[data-sign-mode="daily"] #sign-message { display:none; }
+.auto-subheading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:24px 0 12px; }
+.auto-subheading .text-button { min-height:44px; }
+.auto-fields { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; }
+.auto-place { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px; margin:4px 0 20px; border:1px solid var(--line); background:var(--surface); border-radius:var(--radius); }
+.auto-place > div { min-width:0; overflow-wrap:anywhere; }
+.auto-place button { flex-shrink:0; }
+.auto-empty { padding:28px 0; text-align:center; }
+.auto-tasks,.auto-runs { display:grid; gap:12px; }
+.auto-task { padding:20px; border:1px solid var(--line); border-radius:var(--radius); overflow-wrap:anywhere; }
+.auto-task-heading { display:flex; align-items:baseline; flex-wrap:wrap; gap:8px 12px; }
+.auto-clock { font-size:24px; color:var(--primary); font-weight:600; font-variant-numeric:tabular-nums; }
+.auto-badge { font-size:12px; padding:2px 8px; border-radius:4px; background:var(--bg); color:var(--muted); }
+.auto-badge.enabled,.auto-result-success { color:#146045; background:#eaf6ef; }
+.auto-task p { margin-top:6px; }
+.auto-task-actions { display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; }
+.auto-task-actions button { min-height:44px; }
+.auto-run { border-bottom:1px solid var(--line); padding:12px 0; overflow-wrap:anywhere; }
+.auto-run-heading { display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center; }
+.auto-run p { margin-top:4px; }
+.auto-result-failed,.auto-result-unknown { color:#8c3b13; background:#fff2e8; }
+.auto-confirm-text { white-space:pre-wrap; overflow-wrap:anywhere; margin:16px 0; color:var(--ink); }
+@media(max-width:760px) { .page-nav { grid-template-columns:repeat(5,minmax(0,1fr)); } }
+@media(max-width:520px) {
+ .sign-mode-switch { margin:16px 16px 0; width:calc(100% - 32px); }
+ .sign-mode-switch button { flex:1; padding:8px 12px; }
+ .auto-management { margin:0 16px; }
+ .auto-management > summary { flex-wrap:wrap; gap:4px 8px; }
+ .sign-panel > #auto-message { margin-left:16px; margin-right:16px; }
+ .auto-fields { grid-template-columns:minmax(0,1fr); gap:0; }
+ .auto-place { align-items:stretch; flex-direction:column; padding:12px; }
+ .auto-task { padding:16px; }
+ .auto-task-actions { gap:8px; }
+ .auto-task-actions button { flex:1; padding:8px; }
+ .sign-actions { flex-wrap:wrap; gap:12px; }
+ .page-nav .nav-link { font-size:12px; }
+}

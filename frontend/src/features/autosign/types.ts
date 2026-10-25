@@ -1,0 +1,7 @@
+import type { ConfirmedLocation } from '../locations/types';
+export interface AutoRun { id: number; task_id: number; account: string; name: string; revision: number; date: string; scheduled_time: string; status: string; message: string; started_at?: string; finished_at?: string }
+export interface AutoTask { id: number; account: string; school_id: string; name: string; time: string; enabled: boolean; revision: number; remark: string; remark_label: string; comment: string; address: string; address_name: string; latitude: string; longitude: string; next_at?: string; last_run?: AutoRun }
+export type SaveTask = Pick<AutoTask, 'id' | 'revision' | 'account' | 'school_id' | 'name' | 'time' | 'remark' | 'remark_label' | 'comment'> & ConfirmedLocation & { enabled: true; confirmed: true };
+export interface AutoConfirmation { readonly owner: string; readonly epoch: number; readonly version: number; readonly kind: 'save' | 'resume' | 'remove'; readonly task: Readonly<AutoTask | SaveTask> }
+export const runLabels: Record<string, string> = { running: '执行中', success: '成功', failed: '失败', unknown: '失败', skipped: '失败' };
+export function localTime(value?: string) { const date = new Date(value || ''); return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat('zh-CN', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(date); }

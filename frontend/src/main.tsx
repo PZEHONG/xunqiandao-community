@@ -1,0 +1,10 @@
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import { CssBaseline, ThemeProvider, StyledEngineProvider } from '@mui/material';
+import { HashRouter } from 'react-router-dom';
+import { theme } from './theme';
+import { replaceLegacyHash } from './app/legacyHash';
+import { SessionProvider } from './session/SessionProvider';
+import { App } from './app/App';
+replaceLegacyHash();
+createRoot(document.getElementById('root')!).render(<StrictMode><StyledEngineProvider injectFirst><ThemeProvider theme={theme}><CssBaseline /><SessionProvider><HashRouter><App /></HashRouter></SessionProvider></ThemeProvider></StyledEngineProvider></StrictMode>);

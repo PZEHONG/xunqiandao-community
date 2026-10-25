@@ -1,0 +1,38 @@
+import { act, renderHook, waitFor } from '@testing-library/react';
+import type { ReactNode } from 'react';
+import { beforeEach, expect, it, vi } from 'vitest';
+import { useRecords } from './useRecords';
+import { SessionContext } from '../../session/useSession';
+import { testSession } from '../../test/session';
+import { getSessionEpoch, bumpSessionEpoch } from '../../session/sessionEpoch';
+beforeEach(() => vi.useRealTimers());
+const response = (month: string, status = 200) => new Response(JSON.stringify(status === 200 ? { data: { month_date: month, records: [{ sign_time_text: `${month}-01`, status_code: '0' }] } } : { error: '查询失败' }), { status });
+it('A月成功后B月失败保留已验证A月及快照', async () => {
+  vi.stubGlobal('fetch', vi.fn((path: string) => { const month = new URL(path, 'http://fixture').searchParams.get('month_date')!; return Promise.resolve(response(month, month === '2026-09' ? 502 : 200)); }));
+  const wrapper = ({ children }: { children: ReactNode }) => <SessionContext.Provider value={testSession({ epoch: getSessionEpoch() })}>{children}</SessionContext.Provider>;
+  const { result } = renderHook(useRecords, { wrapper });
+  await act(() => result.current.loadMonth('2026-10'));
+  expect(result.current.snapshot?.month_date).toBe('2026-10');
+  await act(() => result.current.loadMonth('2026-09'));
+  expect(result.current.month).toBe('2026-10'); expect(result.current.snapshot?.month_date).toBe('2026-10'); expect(result.current.error).toMatch(/查询失败/);
+});
+it('快速切月时忽略晚到的旧月份', async () => {
+  let finishOld!: (response: Response) => void;
+  vi.stubGlobal('fetch', vi.fn((path: string) => { const month = new URL(path, 'http://fixture').searchParams.get('month_date')!; return month === '2026-09' ? new Promise(resolve => { finishOld = resolve; }) : Promise.resolve(response(month)); }));
+  const wrapper = ({ children }: { children: ReactNode }) => <SessionContext.Provider value={testSession({ epoch: getSessionEpoch() })}>{children}</SessionContext.Provider>;
+  const { result } = renderHook(useRecords, { wrapper });
+  let old!: Promise<void>; act(() => { old = result.current.loadMonth('2026-09'); });
+  await act(() => result.current.loadMonth('2026-08'));
+  await act(async () => { finishOld(response('2026-09')); await old; });
+  expect(result.current.month).toBe('2026-08');
+});
+it('切换账号立即清空日历，旧请求不能覆盖新账号', async () => {
+  let finishOld!: (response: Response) => void; let session = testSession({ epoch: getSessionEpoch() });
+  vi.stubGlobal('fetch', vi.fn((path: string) => path.includes('account=A') ? new Promise(resolve => { finishOld = resolve; }) : Promise.resolve(response('2026-10'))));
+  const wrapper = ({ children }: { children: ReactNode }) => <SessionContext.Provider value={session}>{children}</SessionContext.Provider>;
+  const { result, rerender } = renderHook(useRecords, { wrapper });
+  session = testSession({ epoch: bumpSessionEpoch(), bindings: [{ account: 'B', school_id: '2', school_name: 'B学校' }] }); rerender();
+  await waitFor(() => expect(result.current.snapshot?.month_date).toBe('2026-10'));
+  await act(async () => finishOld(response('2026-09')));
+  expect(result.current.snapshot?.month_date).toBe('2026-10'); expect(result.current.month).toBe('2026-10');
+});

@@ -1,0 +1,15 @@
+.calendar-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+.sign-calendar { width:100%; }
+.calendar-row { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); text-align:center; }
+.calendar-row [role="columnheader"] { padding:12px 0; color:#5E6B80; font-size:13px; border-bottom:1px solid #E3E8F0; }
+.calendar-cell { min-width:0; min-height:94px; display:flex; flex-direction:column; align-items:center; gap:5px; padding:9px 1px; border-bottom:1px solid #F0F3F8; }
+.day-number { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:600; }
+.signed .day-number { color:#fff; background:#2456D6; }
+.today .day-number { outline:2px solid #2456D6; outline-offset:3px; }
+.lunar { font-size:12px; color:#5E6B80; min-height:18px; }
+.day-warning { font-size:11px; color:#AD352C; }
+.record-detail { padding:16px; border:1px solid #E3E8F0; border-radius:8px; overflow-wrap:anywhere; }
+.record-detail dl { margin:12px 0 0; display:grid; gap:8px; }
+.record-detail dl div { display:grid; grid-template-columns:64px minmax(0,1fr); gap:12px; }
+.record-detail dt { color:#5E6B80; }.record-detail dd { margin:0; }
+@media(max-width:520px) { .calendar-cell { min-height:77px; padding-top:8px; gap:4px; }.day-number { width:27px; height:27px; font-size:14px; }.lunar { font-size:11px; }.record-detail dl div { grid-template-columns:minmax(0,1fr); gap:3px; } }
