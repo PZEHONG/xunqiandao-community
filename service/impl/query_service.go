@@ -2,6 +2,7 @@
 package impl
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -40,6 +41,13 @@ func (q *QueryServiceImpl) QuerySignInfo(account string) (map[string]interface{}
 
 // QuerySignInfoForMonth uses the same requested month for calendar summaries and all detail pages.
 func (q *QueryServiceImpl) QuerySignInfoForMonth(account, month string) (map[string]interface{}, error) {
+	return q.querySignInfoForMonth(context.Background(), account, month)
+}
+
+func (q *QueryServiceImpl) querySignInfoForMonth(ctx context.Context, account, month string) (map[string]interface{}, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	if err := service.ValidateSignMonth(month); err != nil {
 		return nil, err
 	}
@@ -64,7 +72,7 @@ func (q *QueryServiceImpl) QuerySignInfoForMonth(account, month string) (map[str
 	qry.Add("entrance_year", userData["entrance_year"])
 	qry.Add("graduate_year", userData["graduation_year"])
 	qry.Add("school_id", userData["school_id"])
-	data, err := q.queryData(account, "signin40/homepage", qry)
+	data, err := q.queryDataContext(ctx, account, "signin40/homepage", qry)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +82,7 @@ func (q *QueryServiceImpl) QuerySignInfoForMonth(account, month string) (map[str
 	qry.Set("page_size", "100")
 	for page := 1; page <= 50; page++ {
 		qry.Set("page_no", strconv.Itoa(page))
-		detail, err := q.queryData(account, "signIn40/SignInList", qry)
+		detail, err := q.queryDataContext(ctx, account, "signIn40/SignInList", qry)
 		if err != nil {
 			return nil, err
 		}
@@ -107,7 +115,11 @@ func (q *QueryServiceImpl) QuerySignInfoForMonth(account, month string) (map[str
 
 // queryData keeps transport URLs (which contain credentials) out of user errors.
 func (q *QueryServiceImpl) queryData(account, path string, qry url.Values) (map[string]interface{}, error) {
-	req, err := http.NewRequest("GET", "https://api.xixunyun.com/"+path+"?"+qry.Encode(), nil)
+	return q.queryDataContext(context.Background(), account, path, qry)
+}
+
+func (q *QueryServiceImpl) queryDataContext(ctx context.Context, account, path string, qry url.Values) (map[string]interface{}, error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", "https://api.xixunyun.com/"+path+"?"+qry.Encode(), nil)
 	if err != nil {
 		return nil, fmt.Errorf("无法创建签到查询，请稍后重试")
 	}

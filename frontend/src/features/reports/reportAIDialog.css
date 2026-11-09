@@ -1,0 +1,63 @@
+@property --report-ai-ring-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.report-ai-dialog.MuiDialog-paper {
+  position: relative;
+  overflow: visible;
+  isolation: isolate;
+  --report-ai-ring-colors: #4f6bff, #9866ff, #ef68bb, #9a76ff, #38d9ed, #4f6bff;
+}
+
+/* A masked outline surrounds the whole paper without covering its contents. */
+.report-ai-dialog::before,
+.report-ai-dialog::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 2px;
+  border-radius: inherit;
+  background: conic-gradient(from var(--report-ai-ring-angle), var(--report-ai-ring-colors));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 240ms ease-out;
+  animation: report-ai-ring-orbit 4s linear infinite paused;
+}
+
+.report-ai-dialog::after {
+  padding: 4px;
+  filter: blur(8px);
+}
+
+.report-ai-dialog.is-generating::before {
+  opacity: 1;
+  animation-play-state: running;
+}
+
+.report-ai-dialog.is-generating::after {
+  opacity: 0.65;
+  animation-play-state: running;
+}
+
+@keyframes report-ai-ring-orbit {
+  to { --report-ai-ring-angle: 360deg; }
+}
+
+@media (max-width: 600px) {
+  .report-ai-dialog::after { filter: blur(5px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .report-ai-dialog::before,
+  .report-ai-dialog::after {
+    animation: none;
+    transition: none;
+  }
+}

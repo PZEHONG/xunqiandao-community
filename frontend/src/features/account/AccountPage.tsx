@@ -7,6 +7,7 @@ import { StatusChip } from '../../components/StatusChip';
 import { useSession } from '../../session/useSession';
 import { getSessionEpoch } from '../../session/sessionEpoch';
 import { clearUserDrafts } from '../reports/draftStorage';
+import { NotificationEmailCard } from './NotificationEmailCard';
 type Confirmation = Readonly<{ kind: 'clear' | 'logout' | 'drafts'; owner: string; epoch: number }>;
 export function AccountPage() {
   const session = useSession(); const binding = session.bindings[0];
@@ -37,7 +38,7 @@ export function AccountPage() {
       {binding && <Typography>{binding.school_name || '学校名称暂未返回'}</Typography>}
       <Typography variant="body2" color="text.secondary">{binding ? '已读取服务器保存的账号关联。需要更新凭证或请求提示登录过期时，可重新连接。' : session.configCleared ? '本页面连接已清空，可重新连接习讯云。服务器保存的账号仍保留。' : '首次使用请选择学校并验证习讯云账号。'}</Typography>
       <Button disabled={session.authBusy} variant="contained" sx={{ alignSelf: 'flex-start' }} onClick={() => binding || session.configCleared ? session.reconnect() : session.openLogin('official')}>{binding || session.configCleared ? '重新连接习讯云' : '连接习讯云'}</Button>
-    </Stack></MainCard><MainCard title="浏览器配置"><Stack gap={2}><Typography variant="body2" color="text.secondary">仅清除当前用户的本地账号与学校配置，并清空本页面的临时输入。报告草稿和每日任务仍保留。</Typography><Button disabled={session.authBusy} sx={{ alignSelf: 'flex-start' }} onClick={() => setConfirmation(Object.freeze({ kind: 'clear', owner, epoch: session.epoch }))}>清除浏览器配置</Button></Stack></MainCard></>}
+    </Stack></MainCard><NotificationEmailCard /><MainCard title="浏览器配置"><Stack gap={2}><Typography variant="body2" color="text.secondary">仅清除当前用户的本地账号与学校配置，并清空本页面的临时输入。报告草稿和每日任务仍保留。</Typography><Button disabled={session.authBusy} sx={{ alignSelf: 'flex-start' }} onClick={() => setConfirmation(Object.freeze({ kind: 'clear', owner, epoch: session.epoch }))}>清除浏览器配置</Button></Stack></MainCard></>}
     {session.user && <MainCard title="本地报告草稿"><Stack gap={2}><Typography variant="body2" color="text.secondary">草稿和损坏草稿的恢复副本保存在此浏览器，退出登录后仍保留。共用设备时，可主动清除当前用户所有账号与学校的本地周报、月报草稿。此操作无法撤销；已提交到服务器的报告不受影响。</Typography><Button disabled={session.authBusy} color="error" sx={{ alignSelf: 'flex-start' }} onClick={() => setConfirmation(Object.freeze({ kind: 'drafts', owner, epoch: session.epoch }))}>清除本地报告草稿</Button></Stack></MainCard>}
     <ConfirmDialog open={!!c} title={c?.kind === 'drafts' ? '确认清除本地报告草稿' : c?.kind === 'clear' ? '确认清除浏览器配置' : '确认退出登录'} confirmLabel={c?.kind === 'drafts' ? '确认清除草稿' : c?.kind === 'clear' ? '确认清除' : '确认退出'} danger={c?.kind !== 'logout'} busy={session.authBusy} cancel={() => setConfirmation(null)} confirm={() => void confirm()}><Typography>{c?.kind === 'drafts' ? '清除当前用户在此浏览器所有账号与学校的周报、月报草稿及恢复副本，无法撤销。请先下载需要保留的草稿。已提交到服务器的报告、每日任务和浏览器配置不受影响。' : c?.kind === 'clear' ? '清除当前用户在此浏览器保存的账号与学校配置，并清空当前页面的临时输入。服务器账号、报告草稿和每日任务仍保留。' : '退出当前讯签到账号。此浏览器其他标签页也会更新登录状态，报告草稿和每日任务仍保留。'}</Typography></ConfirmDialog>
   </Stack>;

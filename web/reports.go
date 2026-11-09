@@ -1,11 +1,13 @@
 package web
 
 import (
+	"context"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 	"xixunyunsign/service"
 )
 
@@ -52,11 +54,15 @@ func (h *Handlers) handleReportList(c *gin.Context) {
 			*param.target = n
 		}
 	}
-	result, err := h.ReportService.List(c.Request.Context(), account, service.ReportFilter{BusinessType: c.Query("business_type"), Page: page, PageSize: size, StartTime: c.Query("start_time"), EndTime: c.Query("end_time"), MarkState: c.Query("mark_state")})
+	// Include date enrichment in the same budget, below the browser's 30s timeout.
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 25*time.Second)
+	defer cancel()
+	result, err := h.ReportService.List(ctx, account, service.ReportFilter{BusinessType: c.Query("business_type"), Page: page, PageSize: size, StartTime: c.Query("start_time"), EndTime: c.Query("end_time"), MarkState: c.Query("mark_state")})
 	if err != nil {
 		reportFailure(c, err)
 		return
 	}
+	enrichReportDates(ctx, h.ReportService, account, result)
 	c.JSON(200, gin.H{"data": result})
 }
 func (h *Handlers) handleReportTemplate(c *gin.Context) {

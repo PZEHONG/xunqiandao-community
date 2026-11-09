@@ -12,7 +12,7 @@ export async function mockReports(page: Page) {
     }
     if (url.pathname.endsWith('/template')) return route.fulfill({ json: { data: [{ title: '工作内容', sort: 1, require: '1' }, { title: '实习体会', sort: 2, require: '0' }, { title: '新增字段', sort: 3, require: '0' }] } });
     if (url.pathname.endsWith('/detail')) return route.fulfill({ json: { data: { id: '42', student_name: '示例学生', start_date: 1790784000, end_date: '1791302400000', score: 1, state: 1, teacher_name: '张老师', mark_result: '继续保持，注意总结。', content: JSON.stringify([{ title: '工作内容', content: '报告正文只显示文本<script>danger</script>' }]), attachment: '/reports/approved.pdf,javascript:alert(1)' } } });
-    state.queries.push(url.search); return route.fulfill({ json: { data: { list: [{ id: '42', create_time: 1791244800, state: 1, score: 1, teacher_name: '张老师', repulsed: '0' }], count: '16' } } });
+    state.queries.push(url.search); return route.fulfill({ json: { data: { list: [{ id: '42', start_date: '2026-10-01', end_date: '2026-10-07', create_time: 1791244800, state: 1, score: 1, teacher_name: '张老师', repulsed: '0' }], count: '16' } } });
   });
   return state;
 }

@@ -106,6 +106,25 @@ func TestVerifiedProofCannotSendAnotherEmail(t *testing.T) {
 		t.Fatal("proof replay sent mail", e)
 	}
 }
+func TestNotificationCaptchaProofIsRequiredAndSingleUse(t *testing.T) {
+	captchaSettings(t)
+	s, m := testStore(t)
+	u := registerTest(t, s, m, "notifycaptcha", "owner@example.com")
+	m.code = ""
+	s.Captcha.Client = &http.Client{Transport: captchaTransport(func(*http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(`{"status":"success","result":"success"}`))}, nil
+	})}
+	if e := s.SendVerifiedNotificationCode(context.Background(), u.ID, "notify@example.com", "ip", CaptchaProof{}); e == nil || m.code != "" {
+		t.Fatal("missing proof allowed mail", e)
+	}
+	if e := s.SendVerifiedNotificationCode(context.Background(), u.ID, "notify@example.com", "ip", proofFixture()); e != nil || m.code == "" {
+		t.Fatal("verified send failed", e)
+	}
+	m.code = ""
+	if e := s.SendVerifiedNotificationCode(context.Background(), u.ID, "another@example.com", "ip", proofFixture()); e == nil || m.code != "" {
+		t.Fatal("reused proof allowed mail", e)
+	}
+}
 func TestCaptchaConfigurationReloadAndNoKeyDisclosure(t *testing.T) {
 	t.Setenv("GEETEST_API_KEY", "")
 	t.Setenv("AUTH_CONFIG_FILE", filepath.Join(t.TempDir(), ".env"))

@@ -26,8 +26,10 @@ func TestCommunityHasNoPrivateRoutesOrSchema(t *testing.T) {
 	}
 	router := SetupRouter(&Handlers{PlatformAuth: auth, AutoSign: tasks})
 	for _, route := range router.Routes() {
-		if strings.Contains(route.Path, "admin") || strings.Contains(route.Path, "membership") {
-			t.Fatalf("private route registered: %s", route.Path)
+		for _, private := range []string{"admin", "membership", "recharge", "/api/pay", "invitation", "announcement"} {
+			if strings.Contains(route.Path, private) {
+				t.Fatalf("private route registered: %s", route.Path)
+			}
 		}
 	}
 	rows, err := db.Query("SELECT name FROM sqlite_master WHERE type='table'")
@@ -40,8 +42,10 @@ func TestCommunityHasNoPrivateRoutesOrSchema(t *testing.T) {
 		if err := rows.Scan(&name); err != nil {
 			t.Fatal(err)
 		}
-		if strings.Contains(name, "admin") || strings.Contains(name, "membership") || strings.Contains(name, "invitation") {
-			t.Fatalf("private table created: %s", name)
+		for _, private := range []string{"admin", "membership", "invitation", "recharge", "payment", "reward"} {
+			if strings.Contains(name, private) {
+				t.Fatalf("private table created: %s", name)
+			}
 		}
 	}
 	if err := rows.Err(); err != nil {

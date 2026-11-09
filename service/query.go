@@ -2,9 +2,16 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"time"
 )
+
+// DailySignChecker checks official records of any source, type or result.
+// An error means absence could not be verified and callers must not submit.
+type DailySignChecker interface {
+	HasSignInOn(context.Context, string, time.Time) (bool, error)
+}
 
 // MonthlyQueryService adds calendar month selection without changing existing callers.
 type MonthlyQueryService interface {

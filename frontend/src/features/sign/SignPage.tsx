@@ -1,4 +1,3 @@
-import WorkspacePremiumOutlined from '@mui/icons-material/WorkspacePremiumOutlined';
 import { Feedback } from '../../components/Feedback';
 import { Box, Button, Stack } from '@mui/material';
 import { useSearchParams } from 'react-router-dom';
@@ -15,7 +14,7 @@ import { AutoSignPanel } from '../autosign/AutoSignPanel';
 export function SignPage() {
   const [params, setParams] = useSearchParams(); const daily = params.get('mode') === 'daily'; const [busy, setBusy] = useState(false); const session = useSession();
   return <Stack gap={2}>
-    <Stack direction="row" gap={1}><Button disabled={busy} aria-pressed={!daily} variant={daily ? 'outlined' : 'contained'} onClick={() => setParams({})}>立即签到</Button><Button disabled={busy} aria-pressed={daily} endIcon={<WorkspacePremiumOutlined aria-label="会员权益" />} variant={daily ? 'contained' : 'outlined'} onClick={() => setParams({ mode: 'daily' })}>每日自动签到</Button></Stack>
+    <Stack direction="row" gap={1}><Button disabled={busy} aria-pressed={!daily} variant={daily ? 'outlined' : 'contained'} onClick={() => setParams({})}>立即签到</Button><Button disabled={busy} aria-pressed={daily} variant={daily ? 'contained' : 'outlined'} onClick={() => setParams({ mode: 'daily' })}>每日自动签到</Button></Stack>
     {session.status !== 'authenticated' || !session.bindings.length ? <MainCard><Stack gap={2}><Feedback severity="info">请先登录并连接习讯云账号，再选择地点签到。</Feedback><Button onClick={() => session.user ? session.reconnect() : session.openLogin()} sx={{ alignSelf: 'flex-start' }}>{session.user ? '连接习讯云' : '登录'}</Button></Stack></MainCard> : daily ? <AutoSignPanel onBusy={setBusy} /> : <ImmediateSign onBusy={setBusy} />}
   </Stack>;
 }

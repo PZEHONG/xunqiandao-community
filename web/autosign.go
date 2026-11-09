@@ -120,8 +120,12 @@ func (h *Handlers) autoTasks(c *gin.Context) {
 		NextAt   string `json:"next_at"`
 		Timezone string `json:"timezone"`
 	}
+	prechecks, _ := h.AutoSign.Prechecks(now.In(autosign.Shanghai).Format("2006-01-02"))
 	result := []item{}
 	for _, t := range tasks {
+		if precheck, ok := prechecks[t.ID]; ok {
+			t.Precheck = &precheck
+		}
 		for i := range runs {
 			if runs[i].TaskID == t.ID {
 				r := runs[i]

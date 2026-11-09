@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"mime"
 	"net"
 	"net/mail"
 	"net/smtp"
@@ -12,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"xixunyunsign/autosign"
 )
 
 type Mailer interface {
@@ -74,9 +76,28 @@ func validSMTP(c smtpConfig) bool {
 }
 func (SMTPMailer) Ready() bool { return validSMTP(loadSMTP()) }
 func (SMTPMailer) SendCode(ctx context.Context, email, code, purpose string) error {
+	action := "注册账号"
+	if purpose == "reset" {
+		action = "重置密码"
+	}
+	if purpose == "notify" {
+		action = "绑定签到提醒邮箱"
+	}
+	body := fmt.Sprintf("你正在%s，讯签到验证码为：%s\r\n\r\n验证码 10 分钟内有效，请勿透露给他人。如果不是你本人操作，请忽略此邮件。\r\n", action, code)
+	_, e := smtpDeliver(ctx, email, "讯签到验证码", body)
+	return e
+}
+
+// SendMessage classifies failures so the queue never retries a message that
+// may already have reached the recipient.
+func (SMTPMailer) SendMessage(ctx context.Context, to, subject, body string) (autosign.MailOutcome, error) {
+	return smtpDeliver(ctx, to, subject, body)
+}
+
+func smtpDeliver(ctx context.Context, to, subject, body string) (autosign.MailOutcome, error) {
 	c := loadSMTP()
 	if !validSMTP(c) {
-		return fmt.Errorf("SMTP unavailable")
+		return autosign.MailRetryable, fmt.Errorf("SMTP unavailable")
 	}
 	dialer := &net.Dialer{Timeout: 15 * time.Second}
 	var conn net.Conn
@@ -89,7 +110,7 @@ func (SMTPMailer) SendCode(ctx context.Context, email, code, purpose string) err
 		conn, e = dialer.DialContext(ctx, "tcp", address)
 	}
 	if e != nil {
-		return e
+		return autosign.MailRetryable, e
 	}
 	defer conn.Close()
 	deadline := time.Now().Add(20 * time.Second)
@@ -99,40 +120,40 @@ func (SMTPMailer) SendCode(ctx context.Context, email, code, purpose string) err
 	conn.SetDeadline(deadline)
 	client, e := smtp.NewClient(conn, c.host)
 	if e != nil {
-		return e
+		return autosign.MailRetryable, e
 	}
 	defer client.Close()
 	if c.port != "465" {
 		if ok, _ := client.Extension("STARTTLS"); !ok {
-			return fmt.Errorf("SMTP requires TLS")
+			return autosign.MailRetryable, fmt.Errorf("SMTP requires TLS")
 		}
 		if e = client.StartTLS(tlsConfig); e != nil {
-			return e
+			return autosign.MailRetryable, e
 		}
 	}
 	if e = client.Auth(smtp.PlainAuth("", c.username, c.password, c.host)); e != nil {
-		return e
+		return autosign.MailRetryable, e
 	}
 	if e = client.Mail(c.from); e != nil {
-		return e
+		return autosign.MailRetryable, e
 	}
-	if e = client.Rcpt(email); e != nil {
-		return e
+	if e = client.Rcpt(to); e != nil {
+		return autosign.MailRetryable, e
 	}
 	writer, e := client.Data()
 	if e != nil {
-		return e
+		return autosign.MailRetryable, e
 	}
-	action := "注册账号"
-	if purpose == "reset" {
-		action = "重置密码"
-	}
-	message := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: =?UTF-8?B?6K6v562+5Yiw6aqM6K+B56CB?=\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n你正在%s，讯签到验证码为：%s\r\n\r\n验证码 10 分钟内有效，请勿透露给他人。如果不是你本人操作，请忽略此邮件。\r\n", c.from, email, action, code)
+	message := fmt.Sprintf("From: %s\r\nTo: %s\r\nSubject: %s\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n%s", c.from, to, mime.QEncoding.Encode("UTF-8", subject), body)
 	if _, e = writer.Write([]byte(message)); e != nil {
-		return e
+		return autosign.MailUncertain, e
 	}
 	if e = writer.Close(); e != nil {
-		return e
+		return autosign.MailUncertain, e
 	}
-	return client.Quit()
+	// The server accepted the message before QUIT; a QUIT error must not retry.
+	if e = client.Quit(); e != nil {
+		return autosign.MailSent, nil
+	}
+	return autosign.MailSent, nil
 }

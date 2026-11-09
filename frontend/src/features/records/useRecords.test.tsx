@@ -5,6 +5,7 @@ import { useRecords } from './useRecords';
 import { SessionContext } from '../../session/useSession';
 import { testSession } from '../../test/session';
 import { getSessionEpoch, bumpSessionEpoch } from '../../session/sessionEpoch';
+import { currentMonth } from './calendar';
 beforeEach(() => vi.useRealTimers());
 const response = (month: string, status = 200) => new Response(JSON.stringify(status === 200 ? { data: { month_date: month, records: [{ sign_time_text: `${month}-01`, status_code: '0' }] } } : { error: '查询失败' }), { status });
 it('A月成功后B月失败保留已验证A月及快照', async () => {
@@ -28,11 +29,12 @@ it('快速切月时忽略晚到的旧月份', async () => {
 });
 it('切换账号立即清空日历，旧请求不能覆盖新账号', async () => {
   let finishOld!: (response: Response) => void; let session = testSession({ epoch: getSessionEpoch() });
-  vi.stubGlobal('fetch', vi.fn((path: string) => path.includes('account=A') ? new Promise(resolve => { finishOld = resolve; }) : Promise.resolve(response('2026-10'))));
+  const month = currentMonth();
+  vi.stubGlobal('fetch', vi.fn((path: string) => path.includes('account=A') ? new Promise(resolve => { finishOld = resolve; }) : Promise.resolve(response(new URL(path, 'http://fixture').searchParams.get('month_date')!))));
   const wrapper = ({ children }: { children: ReactNode }) => <SessionContext.Provider value={session}>{children}</SessionContext.Provider>;
   const { result, rerender } = renderHook(useRecords, { wrapper });
   session = testSession({ epoch: bumpSessionEpoch(), bindings: [{ account: 'B', school_id: '2', school_name: 'B学校' }] }); rerender();
-  await waitFor(() => expect(result.current.snapshot?.month_date).toBe('2026-10'));
+  await waitFor(() => expect(result.current.snapshot?.month_date).toBe(month));
   await act(async () => finishOld(response('2026-09')));
-  expect(result.current.snapshot?.month_date).toBe('2026-10'); expect(result.current.month).toBe('2026-10');
+  expect(result.current.snapshot?.month_date).toBe(month); expect(result.current.month).toBe(month);
 });

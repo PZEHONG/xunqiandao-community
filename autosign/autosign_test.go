@@ -24,9 +24,10 @@ func TestTaskAndHistoryPersistAcrossDatabaseReopen(t *testing.T) {
 		t.Fatal(e)
 	}
 	start := at("2026-10-15T00:59:58Z")
+	seedPublicBindings(t, s)
 	task := save(t, s, start)
 	f := &fakeSign{}
-	NewRunner(s, f, start).Tick(context.Background(), start.Add(3*time.Second))
+	testRunner(s, f, start).Tick(context.Background(), start.Add(3*time.Second))
 	db.Close()
 	db, e = sql.Open("sqlite3", path)
 	if e != nil {
@@ -42,13 +43,13 @@ func TestTaskAndHistoryPersistAcrossDatabaseReopen(t *testing.T) {
 	if len(tasks) != 1 || !tasks[0].Enabled || tasks[0].Address != task.Address || len(runs) != 1 {
 		t.Fatalf("persistence failed: %#v %#v", tasks, runs)
 	}
-	NewRunner(s, f, start).Tick(context.Background(), start.Add(4*time.Second))
+	testRunner(s, f, start).Tick(context.Background(), start.Add(4*time.Second))
 	if f.calls != 1 {
 		t.Fatal("reopening repeated submitted task")
 	}
 }
 
-func TestSameAccountLaterSlotWaitsForEarlierExecution(t *testing.T) {
+func TestSameAccountLaterSlotWaitsThenSkipsAfterSuccess(t *testing.T) {
 	s := testStore(t)
 	start := at("2026-10-15T00:59:58Z")
 	save(t, s, start)
@@ -59,7 +60,7 @@ func TestSameAccountLaterSlotWaitsForEarlierExecution(t *testing.T) {
 		t.Fatal(e)
 	}
 	f := &slowSign{entered: make(chan string, 2), release: make(chan struct{})}
-	r := NewRunner(s, f, start)
+	r := testRunner(s, f, start)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	r.Poll(ctx, start.Add(3*time.Second))
@@ -77,10 +78,8 @@ func TestSameAccountLaterSlotWaitsForEarlierExecution(t *testing.T) {
 	if e != nil || len(runs) != 2 {
 		t.Fatalf("later same-account slot lost: %#v %v", runs, e)
 	}
-	for _, run := range runs {
-		if run.Status != "success" {
-			t.Fatal(run)
-		}
+	if runs[0].Status != "already_signed" || runs[1].Status != "success" || len(f.entered) != 0 {
+		t.Fatalf("later task must skip after earlier success: %#v", runs)
 	}
 }
 
@@ -114,7 +113,7 @@ func TestSlowExecutionDoesNotBlockLaterPolling(t *testing.T) {
 		t.Fatal(e)
 	}
 	f := &slowSign{entered: make(chan string, 2), release: make(chan struct{})}
-	r := NewRunner(s, f, start)
+	r := testRunner(s, f, start)
 	defer func() { close(f.release); r.workers.Wait() }()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -186,6 +185,7 @@ func testStore(t *testing.T) *Store {
 	if e != nil {
 		t.Fatal(e)
 	}
+	seedPublicBindings(t, s)
 	return s
 }
 func at(s string) time.Time {
@@ -213,7 +213,7 @@ func TestDailyShanghaiAndNoRepeat(t *testing.T) {
 	start := at("2026-10-15T00:59:58Z")
 	task := save(t, s, start)
 	f := &fakeSign{}
-	r := NewRunner(s, f, start)
+	r := testRunner(s, f, start)
 	r.Tick(context.Background(), start.Add(3*time.Second))
 	r.Tick(context.Background(), start.Add(5*time.Second))
 	if f.calls != 1 {
@@ -244,9 +244,9 @@ func TestRestartAndSleepDoNotCatchUp(t *testing.T) {
 			start := at("2026-10-15T00:59:00Z")
 			save(t, s, start)
 			f := &fakeSign{}
-			r := NewRunner(s, f, start)
+			r := testRunner(s, f, start)
 			if mode == "restart" {
-				r = NewRunner(s, f, start.Add(2*time.Minute))
+				r = testRunner(s, f, start.Add(2*time.Minute))
 			}
 			r.Tick(context.Background(), start.Add(2*time.Minute+time.Second))
 			if f.calls != 0 {
@@ -270,7 +270,7 @@ func TestPauseVersionIsolationAndDeleteHistory(t *testing.T) {
 		t.Fatalf("stale update: %v", e)
 	}
 	f := &fakeSign{}
-	r := NewRunner(s, f, start)
+	r := testRunner(s, f, start)
 	r.Tick(context.Background(), start.Add(3*time.Second))
 	if f.calls != 0 {
 		t.Fatal("paused ran")
@@ -297,9 +297,9 @@ func TestFailureNeverRetriesAndInputFailure(t *testing.T) {
 		start := at("2026-10-15T00:59:58Z")
 		save(t, s, start)
 		f := &fakeSign{err: e}
-		r := NewRunner(s, f, start)
+		r := testRunner(s, f, start)
 		r.Tick(context.Background(), start.Add(3*time.Second))
-		NewRunner(s, f, start).Tick(context.Background(), start.Add(4*time.Second))
+		testRunner(s, f, start).Tick(context.Background(), start.Add(4*time.Second))
 		runs, _ := s.Runs("u")
 		want := "failed"
 		if errors.Is(e, service.ErrSignInput) {
@@ -318,7 +318,7 @@ func TestConcurrentClaimAndSchoolChange(t *testing.T) {
 	start := at("2026-10-15T00:59:58Z")
 	save(t, s, start)
 	f := &fakeSign{}
-	r1, r2 := NewRunner(s, f, start), NewRunner(s, f, start)
+	r1, r2 := testRunner(s, f, start), testRunner(s, f, start)
 	var w sync.WaitGroup
 	for _, r := range []*Runner{r1, r2} {
 		w.Add(1)
@@ -332,7 +332,7 @@ func TestConcurrentClaimAndSchoolChange(t *testing.T) {
 	save(t, s2, start)
 	s2.db.Exec("UPDATE users SET school_id=9 WHERE account='u'")
 	f2 := &fakeSign{}
-	NewRunner(s2, f2, start).Tick(context.Background(), start.Add(3*time.Second))
+	testRunner(s2, f2, start).Tick(context.Background(), start.Add(3*time.Second))
 	if f2.calls != 0 {
 		t.Fatal("changed school ran")
 	}
@@ -365,5 +365,18 @@ func TestInvalidConfigAndRecovery(t *testing.T) {
 	runs, _ = s.Runs("u")
 	if len(runs) != 1 {
 		t.Fatal("history removed")
+	}
+}
+
+// Existing scheduling tests use verified empty official history.
+func testRunner(store *Store, sign service.SignService, now time.Time) *Runner {
+	return NewRunner(store, sign, now, recordCheck(func(context.Context, string, time.Time) (bool, error) { return false, nil }))
+}
+
+func seedPublicBindings(t *testing.T, s *Store) {
+	t.Helper()
+	_, err := s.db.Exec(`CREATE TABLE IF NOT EXISTS platform_bindings(account TEXT PRIMARY KEY,user_id INTEGER NOT NULL,school_id TEXT NOT NULL,school_name TEXT NOT NULL DEFAULT ''); INSERT OR IGNORE INTO platform_bindings(account,user_id,school_id) VALUES('u',1,'1'),('v',2,'2')`)
+	if err != nil {
+		t.Fatal(err)
 	}
 }

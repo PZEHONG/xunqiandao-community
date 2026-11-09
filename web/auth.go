@@ -226,11 +226,90 @@ func registerAuthRoutes(router *gin.Engine, h *Handlers) {
 			authError(c, e)
 			return
 		}
+		notificationEmail, found, e := h.PlatformAuth.NotificationEmail(user.ID)
+		if e != nil {
+			authError(c, e)
+			return
+		}
+		var notification any
+		if found {
+			notification = notificationEmail
+		}
 		// Slow business responses must not overwrite a newer login cookie.
 		// The page checks this short local endpoint hourly and on visibility.
 		token, _ := c.Cookie(authCookie)
 		setAuthCookie(c, token, int(platformauth.SessionAge.Seconds()))
-		c.JSON(200, gin.H{"user": user, "bindings": bindings, "consent_accepted": accepted, "agreement_version": platformauth.AgreementVersion})
+		c.JSON(200, gin.H{"user": user, "bindings": bindings, "consent_accepted": accepted, "agreement_version": platformauth.AgreementVersion, "notification_email": notification})
+	})
+	group.GET("/notification-email", func(c *gin.Context) {
+		user := currentPlatformUser(c)
+		value, found, e := h.PlatformAuth.NotificationEmail(user.ID)
+		if e != nil {
+			authError(c, e)
+			return
+		}
+		if !found {
+			c.JSON(200, gin.H{"message": "尚未绑定签到提醒邮箱。"})
+			return
+		}
+		c.JSON(200, value)
+	})
+	group.GET("/notification-email/captcha", func(c *gin.Context) {
+		c.JSON(200, h.PlatformAuth.Captcha.Config())
+	})
+	group.POST("/notification-email/code", func(c *gin.Context) {
+		var input struct {
+			Email   string                    `json:"email"`
+			Captcha platformauth.CaptchaProof `json:"captcha"`
+		}
+		if !authBody(c, &input) {
+			return
+		}
+		if e := h.PlatformAuth.SendVerifiedNotificationCode(c.Request.Context(), currentPlatformUser(c).ID, input.Email, requestClientIP(c), input.Captcha); e != nil {
+			authError(c, e)
+			return
+		}
+		c.JSON(200, gin.H{"message": "验证码已发送，请查收邮箱。"})
+	})
+	group.POST("/notification-email/bind", func(c *gin.Context) {
+		var input struct {
+			Email string `json:"email"`
+			Code  string `json:"code"`
+		}
+		if !authBody(c, &input) {
+			return
+		}
+		value, e := h.PlatformAuth.BindNotificationEmail(currentPlatformUser(c).ID, input.Email, input.Code)
+		if e != nil {
+			authError(c, e)
+			return
+		}
+		c.JSON(200, gin.H{"notification_email": value, "message": "签到提醒邮箱已绑定。"})
+	})
+	group.POST("/notification-email/unbind", func(c *gin.Context) {
+		if e := h.PlatformAuth.UnbindNotificationEmail(currentPlatformUser(c).ID); e != nil {
+			authError(c, e)
+			return
+		}
+		c.JSON(200, gin.H{"message": "已解除签到提醒邮箱绑定。"})
+	})
+	group.POST("/notification-email/enabled", func(c *gin.Context) {
+		var input struct {
+			Enabled *bool `json:"enabled"`
+		}
+		if !authBody(c, &input) {
+			return
+		}
+		if input.Enabled == nil {
+			c.JSON(400, gin.H{"error": "请选择是否接收提醒。"})
+			return
+		}
+		value, e := h.PlatformAuth.SetNotificationEnabled(currentPlatformUser(c).ID, *input.Enabled)
+		if e != nil {
+			authError(c, e)
+			return
+		}
+		c.JSON(200, gin.H{"notification_email": value, "message": "提醒设置已更新。"})
 	})
 	group.POST("/logout", func(c *gin.Context) {
 		token, _ := c.Cookie(authCookie)

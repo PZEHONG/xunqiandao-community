@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+	"xixunyunsign/autosign"
 )
 
 const SessionAge = 365 * 24 * time.Hour
@@ -69,7 +70,8 @@ func New(db *sql.DB, mailer Mailer) (*Store, error) {
  CREATE INDEX IF NOT EXISTS platform_bindings_user ON platform_bindings(user_id);
  CREATE TABLE IF NOT EXISTS platform_official_users (user_id INTEGER PRIMARY KEY);
  CREATE TABLE IF NOT EXISTS platform_consents (user_id INTEGER NOT NULL, version TEXT NOT NULL, accepted_at INTEGER NOT NULL, PRIMARY KEY(user_id,version));
- `)
+ CREATE TABLE IF NOT EXISTS platform_notification_codes (user_id INTEGER NOT NULL,email TEXT NOT NULL COLLATE NOCASE,purpose TEXT NOT NULL,digest TEXT NOT NULL,nonce TEXT NOT NULL,expires_at INTEGER NOT NULL,sent_at INTEGER NOT NULL,attempts INTEGER NOT NULL DEFAULT 0,PRIMARY KEY(user_id,email,purpose));
+ ` + autosign.NotificationSchema)
 	if err != nil {
 		return nil, err
 	}

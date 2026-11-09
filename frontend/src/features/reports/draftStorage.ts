@@ -3,10 +3,11 @@ import type { ReportDraft, ReportField, ReportKind } from './types';
 export function draftKey({ userID, account, school, kind }: { userID: number | string; account: string; school: string; kind: ReportKind }) { return `xixun-report-draft:${userID}:${encodeURIComponent(account.trim())}:${encodeURIComponent(school.trim())}:${kind}`; }
 export function clearUserDrafts(userID: number | string): boolean {
   if (!/^[1-9]\d*$/.test(String(userID))) return false;
-  const pattern = new RegExp(`^xixun-report-draft:${userID}:[^:]*:[^:]*:(week|month)(:recovery)?$`);
+  const pattern = new RegExp(`^xixun-report-draft:${userID}:[^:]*:[^:]*:(week|month)(:recovery|:ai-drafts-v1)?$`);
   try {
-    const keys = Array.from({ length: localStorage.length }, (_, index) => localStorage.key(index)).filter((key): key is string => key !== null && pattern.test(key));
-    for (const key of keys) localStorage.removeItem(key);
+    const storage = localStorage;
+    const keys = Array.from({ length: storage.length }, (_, index) => storage.key(index)).filter((key): key is string => key !== null && pattern.test(key));
+    for (const key of keys) storage.removeItem(key);
     return true;
   } catch { return false; }
 }

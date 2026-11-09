@@ -5,10 +5,11 @@ import { AttachmentPicker } from './AttachmentPicker';
 import { downloadText, reportLabel } from './reportKinds';
 import type { ReportKind } from './types';
 import type { ReportsModel } from './useReports';
-export function ReportEditor({ model: m, kind }: { model: ReportsModel; kind: ReportKind }) {
+export function ReportEditor({ model: m, kind, onAI }: { model: ReportsModel; kind: ReportKind; onAI?: () => void }) {
   const c = m.confirmation;
   return <MainCard title={`新建${reportLabel(kind)}`}><Stack gap={2.5}>
     <Typography variant="body2" color="text.secondary">{m.account} · {m.school}</Typography>
+    {onAI && <Stack direction="row" gap={1.5} alignItems="center"><Button variant="outlined" disabled={m.busy} onClick={onAI}>AI 起草</Button><Typography variant="body2" color="text.secondary">按填写日期生成，可修改后提交</Typography></Stack>}
     {m.submissionUncertain && <Feedback severity="warning" action={<Button disabled={m.busy} onClick={m.closeEditor}>返回列表核对</Button>}>上次提交结果待核对，请先查询报告列表，确认没有重复记录后再重新提交。</Feedback>}
     {m.error && <Feedback severity="error">{m.error}</Feedback>}
     <Stack direction={{ xs: 'column', sm: 'row' }} gap={2}><TextField type="date" label="开始日期" value={m.start} disabled={m.busy} onChange={e => m.setStart(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} /><TextField type="date" label="结束日期" value={m.end} disabled={m.busy} onChange={e => m.setEnd(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} /></Stack>

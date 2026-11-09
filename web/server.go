@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"time"
 	"xixunyunsign/autosign"
+	"xixunyunsign/platformauth"
+	"xixunyunsign/service"
 	// "github.com/gin-contrib/cors" // Moved CORS setup
 	"github.com/gin-gonic/gin"
 	"log"
@@ -18,6 +20,7 @@ import (
 type Server struct {
 	Router     *gin.Engine
 	AutoRunner *autosign.Runner
+	Notifier   *autosign.Notifier
 }
 
 // NewServer creates a new web server instance using the provided Gin engine.
@@ -37,8 +40,11 @@ func NewServer(engine *gin.Engine, handlers *Handlers) *Server {
 	// 	MaxAge:           12 * time.Hour,
 	// }))
 
+	checker, _ := handlers.QueryService.(service.DailySignChecker)
+	notifier := autosign.NewNotifier(handlers.AutoSign, platformauth.SMTPMailer{})
 	return &Server{
-		AutoRunner: autosign.NewRunner(handlers.AutoSign, handlers.SignService, time.Now()),
+		AutoRunner: autosign.NewRunner(handlers.AutoSign, handlers.SignService, time.Now(), checker),
+		Notifier:   notifier,
 		Router:     engine, // Use the provided engine
 	}
 }
@@ -48,6 +54,9 @@ func (s *Server) Run(addr string) {
 	defer cancel()
 	if s.AutoRunner != nil {
 		go s.AutoRunner.Run(ctx)
+	}
+	if s.Notifier != nil {
+		go s.Notifier.Run(ctx)
 	}
 	log.Printf("启动Web服务器，监听地址: %s", addr)
 	server := &http.Server{

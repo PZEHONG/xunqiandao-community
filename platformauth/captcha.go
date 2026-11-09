@@ -88,6 +88,13 @@ func (s *Store) SendVerifiedCode(ctx context.Context, email, purpose, ip string,
 	if purpose != "register" && purpose != "reset" {
 		return failure(400, "验证码用途无效。")
 	}
+	if e := s.verifyCaptcha(ctx, ip, proof); e != nil {
+		return e
+	}
+	return s.SendCode(ctx, email, purpose, ip)
+}
+
+func (s *Store) verifyCaptcha(ctx context.Context, ip string, proof CaptchaProof) error {
 	c := s.Captcha.Config()
 	if c.Enabled {
 		if !c.Ready {
@@ -117,5 +124,5 @@ func (s *Store) SendVerifiedCode(ctx context.Context, email, purpose, ip string,
 			return failure(400, "人机验证已使用，请重新验证。")
 		}
 	}
-	return s.SendCode(ctx, email, purpose, ip)
+	return nil
 }

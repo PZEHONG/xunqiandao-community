@@ -6,6 +6,7 @@ import { listReports, reportDetail, reportTemplate, submitReport, uploadReport }
 import { clearSubmittedDraft, draftKey, loadDraft, loadRecovery, restoreFields, saveDraft } from './draftStorage';
 import { attachmentURL, MAX_ATTACHMENT_SIZE, validRange } from './reportKinds';
 import type { ReportAttachment, ReportConfirmation, ReportDraft, ReportField, ReportFilters, ReportKind, ReportRecord } from './types';
+import type { AIDraft } from './reportAI';
 const emptyFilters: ReportFilters = { start: '', end: '', status: '' };
 const initial = (owner: string) => ({ owner, rows: [] as ReportRecord[], count: 0, page: 1, filters: emptyFilters, loading: false, templateLoading: false, busy: false, error: '', message: '', editor: false, fields: [] as ReportField[], orphaned: [] as ReportField[], start: '', end: '', attachments: [] as ReportAttachment[], pendingNames: [] as string[], storage: '', recoveryRaw: '', submissionUncertain: false, confirmation: null as ReportConfirmation | null, detailOpen: false, detailLoading: false, detail: null as ReportRecord | null, detailError: '' });
 type State = ReturnType<typeof initial>;
@@ -37,7 +38,7 @@ export function useReports(kind: ReportKind) {
       update(s => ({ ...s, ...restored, editor: true, templateLoading: false, start: draft?.start ?? '', end: draft?.end ?? '', attachments: inMemory ? s.attachments : (draft?.attachments ?? []).map(a => ({ ...a, id: crypto.randomUUID() })), pendingNames: inMemory ? s.pendingNames : draft?.pendingNames ?? [], submissionUncertain: draft?.submissionUncertain === true, confirmation: null, recoveryRaw: loaded.status === 'corrupt' ? loaded.raw ?? '' : loadRecovery(key), storage: loaded.status === 'unavailable' ? '草稿未保存：浏览器存储不可用，请下载备份。' : loaded.status === 'corrupt' ? '旧草稿损坏，可下载原始内容后恢复。' : loaded.draft ? '已恢复此账号的本地草稿' : '输入后自动保存草稿' }));
     } catch (e) { if (current() && !job.signal.aborted && seq === templateSeq.current) update(s => ({ ...s, templateLoading: false, error: e instanceof Error ? e.message : '读取模板失败。' })); }
   }, [account, session.status, session.epoch, kind, key, current, update]);
-  const change = useCallback((fn: (s: State) => State) => { if (!current() || lock.current || !model.current.editor) return; version.current++; update(s => ({ ...fn(s), confirmation: null, error: '' })); persist(); }, [current, update, persist]);
+  const change = useCallback((fn: (s: State) => State) => { if (!current() || lock.current || !model.current.editor) return; version.current++; update(s => ({ ...fn(s), confirmation: null, error: '' })); return persist(); }, [current, update, persist]);
   const setStart = (value: string) => change(s => ({ ...s, start: value })); const setEnd = (value: string) => change(s => ({ ...s, end: value }));
   const setField = (index: number, content: string) => change(s => ({ ...s, fields: s.fields.map((f, i) => i === index ? { ...f, content } : f) }));
   const addFiles = (files: File[]) => {
@@ -87,6 +88,14 @@ export function useReports(kind: ReportKind) {
   const closeDetail = () => { detailJob.current?.abort(); detailSeq.current++; update(s => ({ ...s, detailOpen: false, detail: null, detailError: '' })); };
   const setFilter = (filters: ReportFilters) => { readJob.current?.abort(); sequence.current++; update(s => ({ ...s, filters, loading: false })); };
   const closeEditor = () => { if (!lock.current) { version.current++; update(s => ({ ...s, editor: false, confirmation: null, error: '' })); } };
-  return { ...state, key, account, school: binding?.school_name ?? '', pages: Math.max(1, Math.ceil(state.count / 15)), load, openEditor, closeEditor, setStart, setEnd, setField, addFiles, removeAttachment: (id: string) => change(s => ({ ...s, attachments: s.attachments.filter(a => a.id !== id) })), ignorePending: (index: number) => change(s => ({ ...s, pendingNames: s.pendingNames.filter((_, i) => i !== index) })), save: persist, prepareConfirmation, cancelConfirmation, submitConfirmed, openDetail, closeDetail, setFilter };
+  const importAIDraft = async (draft: AIDraft) => {
+    if (!current() || lock.current) throw new Error('当前状态不可载入，请稍后重试。');
+    if (!model.current.editor) await openEditor();
+    if (!current() || !model.current.editor) throw new Error(model.current.error || '读取学校模板失败。');
+    const restored = restoreFields(model.current.fields, { start: draft.start, end: draft.end, content: draft.fields, orphaned: [], attachments: [], pendingNames: [] });
+    const saved = change(s => ({ ...s, ...restored, orphaned: [...s.orphaned, ...restored.orphaned], start: draft.start, end: draft.end }));
+    if (!saved?.ok) throw new Error('正文已载入，但编辑器草稿未能保存；AI 草稿已保留，请下载备份后重试。');
+  };
+  return { ...state, key, account, school: binding?.school_name ?? '', pages: Math.max(1, Math.ceil(state.count / 15)), load, openEditor, closeEditor, importAIDraft, setStart, setEnd, setField, addFiles, removeAttachment: (id: string) => change(s => ({ ...s, attachments: s.attachments.filter(a => a.id !== id) })), ignorePending: (index: number) => change(s => ({ ...s, pendingNames: s.pendingNames.filter((_, i) => i !== index) })), save: persist, prepareConfirmation, cancelConfirmation, submitConfirmed, openDetail, closeDetail, setFilter };
 }
 export type ReportsModel = ReturnType<typeof useReports>;

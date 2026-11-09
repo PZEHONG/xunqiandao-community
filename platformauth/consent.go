@@ -3,7 +3,7 @@ package platformauth
 import "strings"
 
 // AgreementVersion changes when the displayed agreement texts need new consent.
-const AgreementVersion = "2026-10-16-auto-renew"
+const AgreementVersion = "2026-11-09-community-ai-notify"
 
 func (s *Store) HasAccountConsent(account string) (bool, error) {
 	var accepted bool

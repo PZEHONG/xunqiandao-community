@@ -269,6 +269,9 @@ func (s *SignServiceImpl) SignInWithOptions(ctx context.Context, account, addres
 		}
 	}
 
+	if options.OnSubmitting != nil {
+		options.OnSubmitting()
+	}
 	if _, err = s.requestWithSchool(ctx, account, options.ExpectedSchoolID, http.MethodPost, "signin_rsa", strings.NewReader(data.Encode()), "application/x-www-form-urlencoded"); err != nil {
 		return "", err
 	}

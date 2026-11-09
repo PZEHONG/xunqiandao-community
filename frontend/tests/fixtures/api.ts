@@ -10,8 +10,7 @@ export async function mockAPI(target: BrowserContext | Page, options: FixtureOpt
     if (!url.pathname.startsWith('/api/') && !url.pathname.startsWith('/_AMapService')) { await route.continue(); return; }
     const fulfill = (json: unknown, status = 200) => route.fulfill({ status, json });
     const path = url.pathname;
-    if (path === '/api/membership/self') return fulfill({ status: 'active', auto_sign: true, expires_at: '2099-01-01T00:00:00Z', server_time: new Date().toISOString(), revision: 1 });
-    if (path === '/api/membership/redemptions') return fulfill({ items: [], total: 0, page: 1, size: 20 });
+    if (path === '/api/auth/notification-email') return fulfill({ message: '尚未绑定签到提醒邮箱。' });
     if (path === '/api/auth/status') return fulfill({ agreement_version: 'fixture-v1', official_login: true, registration: false, email_login: false });
     if (path === '/api/auth/self') return fulfill(state.authenticated ? fixtureSelf : { code: 'AUTH_REQUIRED', error: '请登录' }, state.authenticated ? 200 : 401);
     if (['/api/auth/login', '/api/auth/official', '/api/auth/logout'].includes(path)) {

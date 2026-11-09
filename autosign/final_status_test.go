@@ -21,7 +21,7 @@ func TestFinalFailureStatusesAndRecovery(t *testing.T) {
 			start := at("2026-10-15T00:59:58Z")
 			task := save(t, s, start)
 			f := &fakeSign{err: errors.New("private-token")}
-			r := NewRunner(s, f, start)
+			r := testRunner(s, f, start)
 			switch mode {
 			case "legacy":
 				s.db.Exec("INSERT INTO auto_sign_runs(task_id,account,name,revision,date,scheduled_time,started_at,status,message) VALUES(1,'u','test',1,'2026-10-14','09:00',?,'unknown','未获得明确成功结果，结果待核对')", stamp(start))
@@ -34,22 +34,29 @@ func TestFinalFailureStatusesAndRecovery(t *testing.T) {
 			case "late":
 				r.execute(context.Background(), task, start.Add(3*time.Second), start.Add(3*time.Minute))
 			case "panic":
-				NewRunner(s, &panicSign{}, start).Tick(context.Background(), start.Add(3*time.Second))
+				testRunner(s, &panicSign{}, start).Tick(context.Background(), start.Add(3*time.Second))
 			default:
 				if mode == "timeout" {
 					f.err = context.DeadlineExceeded
 				}
 				r.Tick(context.Background(), start.Add(3*time.Second))
 			}
+			want := "failed"
+			if mode == "panic" {
+				want = "pending_verification"
+			}
+			if mode == "late" {
+				want = "missed"
+			}
 			runs, e := s.Runs("u")
-			if e != nil || len(runs) != 1 || runs[0].Status != "failed" {
-				t.Fatalf("want failed: %#v %v", runs, e)
+			if e != nil || len(runs) != 1 || runs[0].Status != want {
+				t.Fatalf("want %s: %#v %v", want, runs, e)
 			}
 			if strings.Contains(runs[0].Message, "待核对") || strings.Contains(runs[0].Message, "private-token") {
 				t.Fatal(runs[0].Message)
 			}
 			if mode == "transport" || mode == "timeout" {
-				NewRunner(s, f, start).Tick(context.Background(), start.Add(4*time.Second))
+				testRunner(s, f, start).Tick(context.Background(), start.Add(4*time.Second))
 				if f.calls != 1 {
 					t.Fatal("repeated submission")
 				}

@@ -21,6 +21,7 @@ type SignRemark struct {
 
 type SignOptions struct {
 	BeforeSubmit        func() error `json:"-"`
+	OnSubmitting        func()       `json:"-"`
 	ExpectedSchoolID    string       `json:"-"`
 	ExpectedRemarkLabel string       `json:"-"`
 	Remark              string       `json:"remark"`

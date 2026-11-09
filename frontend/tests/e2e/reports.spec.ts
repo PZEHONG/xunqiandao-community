@@ -4,7 +4,24 @@ import { mockReports, reportDraftKey } from '../fixtures/reports';
 for (const [kind, width] of [['week', 390], ['month', 1440]] as const) test(`${kind} ${width}px 旧草稿恢复、模板变化、附件重选及确认失败重试`, async ({ page }, testInfo) => {
   await page.setViewportSize({ width, height: 900 }); const api = await mockAPI(page); const state = await mockReports(page); state.fail = true;
   await page.addInitScript(({ key }) => { if (!localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify({ start: '2026-10-01', end: '2026-10-07', content: [{ title: '工作内容', sort: 8, content: '旧版保留的实习正文' }, { title: '模板已删除', sort: 2, content: '不可丢失的旧字段' }], attachments: [{ name: '已上传.pdf', uri: '/reports/old.pdf' }], pendingNames: ['待重选.pdf'] })); }, { key: reportDraftKey(kind) });
-  await page.goto(`#/reports/${kind}`); await page.getByRole('button', { name: '新建报告', exact: true }).click();
+  await page.goto(`#/reports/${kind}`);
+  if (width > 960) {
+    await expect(page.getByRole('table', { name: '报告列表' }).getByRole('columnheader')).toHaveCount(7);
+    const headers = await page.getByRole('table', { name: '报告列表' }).getByRole('columnheader').allTextContents();
+    expect(headers[0]).toBe('报告日期'); expect(headers.at(-1)).toContain('提交时间');
+    expect(headers.join('')).not.toContain('北京时间');
+    await expect(page.getByRole('table').getByRole('row').nth(1).getByRole('cell').first()).toContainText('2026-10-01');
+    await expect(page.getByRole('table').getByRole('row').nth(1).getByRole('cell').first()).toContainText('2026-10-07');
+    await expect(page.getByRole('table').getByRole('row').nth(1).getByRole('cell').first()).not.toContainText('至');
+  } else {
+    const card = page.getByRole('article').first();
+    await expect(card).toBeVisible();
+    expect(await card.locator('dt').allTextContents()).toEqual(['报告日期', '批阅老师', '批阅时间', '是否退回', '提交时间']);
+    await expect(card.locator('dd').first()).toContainText('2026-10-01');
+    await expect(card.locator('dd').first()).toContainText('2026-10-07');
+    await expect(card.locator('dd').first()).not.toContainText('至');
+  }
+  await page.getByRole('button', { name: '新建报告', exact: true }).click();
   await expect(page.getByLabel('工作内容', { exact: false })).toHaveValue('旧版保留的实习正文'); await expect(page.getByLabel('新增字段', { exact: true })).toHaveValue(''); await expect(page.getByText('不可丢失的旧字段', { exact: true })).toBeVisible();
   await expect(page.getByText('待重选.pdf', { exact: true })).toBeVisible(); await page.getByRole('button', { name: '核对并提交', exact: true }).click(); await expect(page.getByRole('dialog')).toHaveCount(0); expect(state.writes).toEqual([]);
   await page.getByLabel('选择报告附件').setInputFiles({ name: '待重选.pdf', mimeType: 'application/pdf', buffer: Buffer.from('fixture') });

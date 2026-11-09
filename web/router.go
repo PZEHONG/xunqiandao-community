@@ -40,6 +40,10 @@ func SetupRouter(handlers *Handlers) *gin.Engine { // Accept Handlers struct
 		api.GET("/reports", handlers.handleReportList)
 		api.GET("/reports/template", handlers.handleReportTemplate)
 		api.GET("/reports/detail", handlers.handleReportDetail)
+		api.GET("/reports/ai/config", handlers.handleAIConfig)
+		api.GET("/reports/ai/missing", handlers.handleMissingReports)
+		api.GET("/reports/ai/dates", handlers.handleSuggestReportDates)
+		api.POST("/reports/ai/generate", handlers.handleGenerateReport)
 		api.POST("/reports", handlers.handleReportSubmit)
 		api.POST("/reports/attachments", handlers.handleReportUpload)
 		// 根据需要添加更多API端点
